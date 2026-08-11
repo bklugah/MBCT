@@ -1,0 +1,11 @@
+cd D:\AppDesign\standalone\networkProj1\NeuroSynthesis_NCT_Complete
+
+python precompute_neurosynth.py
+python precompute_neurotransmitter.py
+python precompute_transcriptomics.py
+
+
+If auto-detection fails (specify the atlas dir explicitly)
+bashpython precompute_neurosynth.py        --atlas-dir cbig_network_correspondence_data/atlases
+python precompute_neurotransmitter.py  --atlas-dir cbig_network_correspondence_data/atlases
+python precompute_transcriptomics.py   --atlas-dir cbig_network_correspondence_data/atlases

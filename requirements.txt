@@ -1,0 +1,31 @@
+# MBCT runtime dependencies
+# Install into a clean venv before building:
+#     python -m venv venv
+#     venv/Scripts/activate        (Windows)   |  source venv/bin/activate  (mac/Linux)
+#     pip install -r requirements.txt
+#
+# IMPORTANT: install cbig_network_correspondence FIRST, then the rest, to avoid
+# it pulling an incompatible numpy/nibabel on top of the others.
+
+# --- GUI ---
+PyQt6>=6.5
+
+# --- core scientific stack ---
+numpy>=1.24,<2.0
+scipy>=1.10
+pandas>=2.0
+matplotlib>=3.7
+
+# --- neuroimaging I/O & visualization ---
+nibabel>=5.0
+nilearn>=0.10,<0.11
+
+# --- meta-analysis (Term->Map, Coordinate->Terms, MACM) ---
+nimare>=0.2
+statsmodels>=0.14
+
+# --- network correspondence engine ---
+cbig_network_correspondence==0.3.3
+
+# --- packaging (build-time only; not imported by the app) ---
+pyinstaller>=6.0

@@ -1,0 +1,61 @@
+MBCT — Multimodal Brain Network Characterization Tool
+Copyright (C) 2026 Benjamin Klugah-Brown
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program.  If not, see <https://www.gnu.org/licenses/>.
+
+Contact: bklugah@gmail.com
+
+
+================================================================================
+ACTION REQUIRED — replace this file with the full licence text
+================================================================================
+
+This file currently contains only the copyright notice. A valid GPL-3.0
+distribution must include the COMPLETE licence text (~675 lines).
+
+Get it in either of these ways:
+
+  1. Download it directly:
+         https://www.gnu.org/licenses/gpl-3.0.txt
+     Save it as LICENSE, then paste the copyright notice above at the very top.
+
+  2. Let GitHub do it for you (easiest):
+     In your repository, click "Add file" -> "Create new file", name the file
+     LICENSE, and GitHub will offer a "Choose a license template" button.
+     Pick "GNU General Public License v3.0", fill in the year (2026) and your
+     name (Benjamin Klugah-Brown), and commit. GitHub inserts the full official
+     text for you.
+
+Option 2 is recommended: it guarantees the text is correct and unmodified, and
+GitHub will then display the licence badge on your repository page.
+
+--------------------------------------------------------------------------------
+Note on third-party components
+--------------------------------------------------------------------------------
+
+MBCT integrates and depends upon external toolboxes and reference datasets that
+are NOT covered by this licence and retain their own terms:
+
+  * cbig_network_correspondence (Network Correspondence Toolbox, CBIG)
+  * NiMARE / Neurosynth
+  * neuromaps and the PET receptor atlas of Hansen et al. (2022)
+  * abagen and the Allen Human Brain Atlas
+  * BrainSMASH
+  * FSL atlases (Harvard-Oxford, JHU-ICBM)
+  * MNI152 templates
+  * PyQt6, nibabel, nilearn, NumPy, SciPy, Matplotlib, pandas, statsmodels
+
+Users and redistributors are responsible for complying with the licences and
+data-use agreements of these components. Note in particular that PyQt6 is
+distributed under the GPL (or a commercial licence from Riverbank Computing);
+distributing MBCT under the GPL-3.0 is consistent with PyQt6's GPL terms.
