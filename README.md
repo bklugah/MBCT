@@ -90,34 +90,64 @@ python mbct_cli.py label --coord 28 -8 8
 
 Results are written as CSV or JSON with a provenance record of the tool version, atlas, data type, threshold and timestamp, so an analysis can be reported as a single reproducible command. See [`CLI.md`](CLI.md).
 
-## Installation
+## Getting MBCT
 
-Download an edition from [Releases](../../releases), unzip, and run the
-executable. Keep the whole folder together — the executable needs the files
-alongside it.
+MBCT can be run in three ways. Which suits you depends on whether you want a
+graphical application, and whether you are willing to build it yourself.
 
-* **Windows** — run the `.exe`.
-* **macOS** — open the `.app`. Unsigned builds may need right-click → *Open*
-  the first time.
-* **Linux** — run the executable, or the AppImage if provided.
+### 1. Run from source (recommended, works on every platform)
 
----
-
-## Building from source
-
-See [`BUILD.md`](BUILD.md) for full instructions.
+This needs Python but no compilation, and gives you the full graphical
+application:
 
 ```bash
+git clone https://github.com/bklugah/MBCT.git
+cd MBCT
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+python fetch_reference_data.py    # check what reference data you still need
+```
+
+Then launch whichever edition you want:
+
+```bash
+python nct_desktop_app_IMPROVED.py   # full application
+python mbct_core.py                  # Analysis + Results only
+python mbct_brain_viewer.py          # viewer, connectivity and map tools
+python mbct_meta_analysis.py         # Term→Map, Coordinate→Terms, MACM
+```
+
+### 2. Use the command-line interface
+
+No GUI, no display required — suitable for servers and batch jobs. See
+[`CLI.md`](CLI.md).
+
+### 3. Build a desktop application yourself
+
+If you want a self-contained double-clickable application, build it with
+PyInstaller on the machine you intend to run it on. See [`BUILD.md`](BUILD.md):
+
+```bash
 pyinstaller --clean MBCT_Core.spec --noconfirm
 ```
 
-PyInstaller must run **on the target operating system**; builds cannot be
-cross-compiled.
+The resulting folder in `dist/` runs without Python installed.
 
-### Reference data
+> **Why aren't prebuilt applications provided here?** Because MBCT bundles the
+> reference atlases, the built applications are several gigabytes — beyond the
+> 2 GB per-file limit for GitHub release assets. Building locally takes a few
+> minutes and produces exactly the same application. Prebuilt binaries may be
+> distributed through another archive in future; see the repository page for
+> current links.
+
+---
+
+## Reference data
+
+PyInstaller must be run **on the target operating system**; builds cannot be
+cross-compiled. Full build instructions are in [`BUILD.md`](BUILD.md).
+
 
 Reference datasets are **not** included in this repository — they are
 third-party resources with their own distribution channels, and several files
@@ -190,13 +220,40 @@ A citation for MBCT itself will be added when the manuscript is available.
 
 **Benjamin Klugah-Brown** — bklugah@gmail.com
 
-## Licence
+## Licence and terms of use
 
-GNU General Public License v3.0 — see [`LICENSE`](LICENSE).
+MBCT is released under the **GNU General Public License v3.0** — see
+[`LICENSE`](LICENSE).
 
-In short: you may use, study, modify and redistribute this software, but any
-distributed work derived from it must also be released under the GPL-3.0 with
-its source made available. This keeps MBCT and everything built on it open.
+**You may** use MBCT for any purpose, including research and commercial work;
+study and modify the source; and redistribute it.
 
-Third-party reference datasets and toolboxes retain their own licences and
-terms of use.
+**You must**, if you distribute MBCT or anything derived from it:
+
+* release that work under the GPL-3.0 as well, and make its source available;
+* retain the existing copyright and author attribution, including the
+  information shown in the application's About dialog and Help pages;
+* state clearly that you have modified it, and when.
+
+In practice this means nobody can take MBCT, make a closed-source product from
+it, and distribute that — any derivative must remain open under the same terms.
+
+GPL-3.0 does not prohibit charging money for the software. It does require that
+anyone who receives it also receives the complete source code and the same
+rights, which leaves no room for a proprietary fork.
+
+### Citation
+
+Licensing and citation are separate. Beyond the licence terms, and in keeping
+with normal academic practice, please **cite MBCT in any published work that
+uses it**, together with the underlying resources listed above. A citation and
+DOI will be added here when the accompanying manuscript is available.
+
+### Third-party components
+
+MBCT depends on external toolboxes and reference datasets that are not covered
+by this licence and retain their own terms, including PyQt6 (GPL v3, or a
+commercial licence from Riverbank Computing), the Network Correspondence
+Toolbox, NiMARE/Neurosynth, neuromaps, abagen, BrainSMASH, the FSL atlases
+(Harvard–Oxford, JHU-ICBM) and the MNI152 templates. Users and redistributors
+are responsible for complying with those licences and data-use agreements.
