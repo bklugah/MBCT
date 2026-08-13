@@ -1,5 +1,7 @@
 # MBCT — Multimodal Brain Network Characterization Tool
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21914489.svg)](https://doi.org/10.5281/zenodo.21914489)
+
 **MBCT** takes a volumetric brain map — a group activation contrast, an
 independent component, a lesion or ROI mask, a data-driven cluster — and
 returns a reproducible, multi-scale annotation of what that location *means*:
@@ -212,7 +214,8 @@ cite them alongside MBCT.
 * **Spatial nulls** — Burt, J. B., et al. (2020). *NeuroImage*, 220, 117038. ·
   Alexander-Bloch, A. F., et al. (2018). *NeuroImage*, 178, 540–551.
 
-A citation for MBCT itself will be added when the manuscript is available.
+Klugah-Brown, B. (2026). *MBCT: Multimodal Brain Network Characterization
+Tool* (Version 1.0.1) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21914489
 
 ---
 
@@ -246,8 +249,14 @@ rights, which leaves no room for a proprietary fork.
 
 Licensing and citation are separate. Beyond the licence terms, and in keeping
 with normal academic practice, please **cite MBCT in any published work that
-uses it**, together with the underlying resources listed above. A citation and
-DOI will be added here when the accompanying manuscript is available.
+uses it**, together with the underlying resources listed above. Please cite the software as:
+
+> Klugah-Brown, B. (2026). *MBCT: Multimodal Brain Network
+> Characterization Tool* (Version 1.0.1) [Computer software]. Zenodo.
+> https://doi.org/10.5281/zenodo.21914489
+
+A citation for the accompanying manuscript will be added when it is
+available.
 
 ### Third-party components
 

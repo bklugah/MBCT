@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+title: "MBCT: Multimodal Brain Network Characterization Tool"
+message: "If you use this software, please cite it using the metadata from this file."
+type: software
+authors:
+  - family-names: "Klugah-Brown"
+    given-names: "Benjamin"
+    email: "bklugah@gmail.com"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.21914489"
+    description: "Version 1.0.1"
+repository-code: "https://github.com/bklugah/MBCT"
+url: "https://github.com/bklugah/MBCT"
+abstract: >-
+  MBCT takes a volumetric brain map and returns a reproducible, multi-scale
+  annotation: quantitative spatial correspondence with canonical functional
+  network parcellations, meta-analytic cognitive decoding against the
+  Neurosynth database, molecular association with PET-derived neurotransmitter
+  receptor and transporter density maps, and transcriptomic association with
+  receptor-gene expression from the Allen Human Brain Atlas. All cross-modal
+  associations are evaluated against spatial-autocorrelation-preserving null
+  models, and receptor density is paired with the homologous receptor gene to
+  give a cross-modal convergence read-out. Distributed as a desktop application
+  and a command-line interface.
+keywords:
+  - neuroimaging
+  - brain networks
+  - functional connectivity
+  - meta-analysis
+  - neurotransmitter receptors
+  - imaging transcriptomics
+  - spatial null models
+  - reproducibility
+license: GPL-3.0
+version: "1.0.1"
+date-released: "2026-08-11"
