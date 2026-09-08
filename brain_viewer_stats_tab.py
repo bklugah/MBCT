@@ -62,9 +62,9 @@ class _Overlay:
 
     def __init__(self, name, data, affine):
         self.name = name
-        self.data = data            # original data (for stats / clusters / export)
+        self.data = data            
         self.affine = affine
-        self.disp_data = data       # data resampled to the display grid (set later)
+        self.disp_data = data       
         self.cmap = 'hot'
         self.alpha = 0.75
         self.visible = True
@@ -97,14 +97,14 @@ class BrainViewerStatsTab(QWidget):
         self.under_vmax = 1.0
 
         # overlays (max 3)
-        self.overlays = []           # list[_Overlay]
-        self.active_ov = None        # index into overlays for the stats panel
+        self.overlays = []          
+        self.active_ov = None        
 
         # view state
         self.view = 'axial'
         self.slice_idx = {'axial': 0, 'coronal': 0, 'sagittal': 0}
-        self.crosshair_ijk = None    # voxel in underlay space
-        self._debug_click = True     # TEMP: print click mapping diagnostics
+        self.crosshair_ijk = None   
+        self._debug_click = True     
         self.triplanar = True
         self.glass_mode = False
         self.zoom = 1.0
@@ -136,15 +136,11 @@ class BrainViewerStatsTab(QWidget):
         except Exception:
             pass
 
-        # left rail: ~14% of width, clamped to a readable range
+        
         self.rail_w = int(max(220, min(screen_w * 0.14, 320)))
-        # right stats panel: ~22% of width, clamped
         self.right_w = int(max(360, min(screen_w * 0.22, 520)))
-        # initial center share is whatever is left
         self.center_w = max(480, screen_w - self.rail_w - self.right_w)
-        # canvas minimum: scale with screen but stay modest so small screens cope
         self.canvas_min = int(max(180, min(screen_h * 0.22, 360)))
-        # histogram / table minimum heights scale a little too
         self.hist_min_h = int(max(150, min(screen_h * 0.18, 260)))
         self.table_min_h = int(max(140, min(screen_h * 0.18, 260)))
 
@@ -272,7 +268,6 @@ class BrainViewerStatsTab(QWidget):
         split = QSplitter(Qt.Orientation.Horizontal)
         split.addWidget(left); split.addWidget(center); split.addWidget(right)
         split.setSizes([self.rail_w, self.center_w, self.right_w])
-        # center viewer absorbs extra space when the window grows/shrinks
         split.setStretchFactor(0, 0)
         split.setStretchFactor(1, 1)
         split.setStretchFactor(2, 0)
@@ -368,11 +363,10 @@ class BrainViewerStatsTab(QWidget):
         self.conn_combo.setCurrentText('18'); trow.addWidget(self.conn_combo, 3, 1)
         L.addLayout(trow)
 
-        # ── Live threshold slider (drag to set the positive threshold) ──
         thr_slide_row = QHBoxLayout()
         thr_slide_row.addWidget(QLabel("Threshold"))
         self.thr_slider = QSlider(Qt.Orientation.Horizontal)
-        self.thr_slider.setRange(0, 1000)   # mapped to [vmin..vmax] of active overlay
+        self.thr_slider.setRange(0, 1000)   
         self.thr_slider.setValue(0)
         self.thr_slider.valueChanged.connect(self._on_thr_slider)
         thr_slide_row.addWidget(self.thr_slider, 1)
@@ -417,16 +411,15 @@ class BrainViewerStatsTab(QWidget):
         self.cl_table.clicked.connect(self._on_cluster_click)
         L.addWidget(self.cl_table, 1)
 
-        # tabs: stats / histogram
         tabs = QTabWidget()
-        # stats text
+  
         self.stats_lbl = QLabel("Load a map to see statistics.")
         self.stats_lbl.setObjectName("statsText"); self.stats_lbl.setWordWrap(True)
         self.stats_lbl.setFont(QFont('Consolas', 9))
         self.stats_lbl.setAlignment(Qt.AlignmentFlag.AlignTop)
         sw = QWidget(); sl = QVBoxLayout(sw); sl.addWidget(self.stats_lbl); sl.addStretch()
         tabs.addTab(sw, "Statistics")
-        # histogram
+        
         self.hist_canvas = QLabel(); self.hist_canvas.setObjectName("histCanvas")
         self.hist_canvas.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.hist_canvas.setMinimumHeight(self.hist_min_h)
@@ -462,7 +455,7 @@ class BrainViewerStatsTab(QWidget):
             self._reset_slices(self.under_data.shape)
             if self.crosshair_ijk is None:
                 self.crosshair_ijk = tuple(s // 2 for s in self.under_data.shape)
-            # existing overlays must be re-projected onto the new underlay grid
+            
             for ov in self.overlays:
                 self._resample_overlay_for_display(ov)
             self._queue()
@@ -490,16 +483,16 @@ class BrainViewerStatsTab(QWidget):
             d = img.get_fdata()
             if d.ndim > 3: d = d[..., 0]
             ov = _Overlay(Path(path).stem, np.asarray(d, dtype=np.float32), img.affine)
-            # build the display version on the current reference grid
+            
             self._resample_overlay_for_display(ov)
             self.overlays.append(ov)
             self.ov_list.addItem(QListWidgetItem(ov.name))
             self.ov_list.setCurrentRow(len(self.overlays) - 1)
-            # if no underlay yet, use overlay geometry for slices/crosshair
+           
             if self.under_data is None:
                 self._reset_slices(ov.data.shape)
                 self.crosshair_ijk = tuple(s // 2 for s in ov.data.shape)
-            # sensible default threshold from the data
+          
             self.thr_pos.setValue(round(float(ov.vmax) * 0.5, 2))
             self._update_stats_panel()
             self._queue()
@@ -513,7 +506,7 @@ class BrainViewerStatsTab(QWidget):
         overlay's native resolution/space. Original data is preserved for stats."""
         ref_shape = self._ref_shape()
         ref_aff = self.under_affine if self.under_data is not None else None
-        # nothing to match against, or already identical grid -> use original
+        
         if ref_aff is None or (ov.data.shape == ref_shape and
                                np.allclose(ov.affine, ref_aff, atol=1e-4)):
             ov.disp_data = ov.data
@@ -529,7 +522,7 @@ class BrainViewerStatsTab(QWidget):
             ov.disp_data = np.asarray(dd, dtype=np.float32)
             print(f"ℹ️ Resampled overlay '{ov.name}' {ov.data.shape} -> {ov.disp_data.shape} for display")
         except TypeError:
-            # older nilearn without force_resample/copy_header
+            
             from nilearn.image import resample_img
             src = nib.Nifti1Image(ov.data, ov.affine)
             res = resample_img(src, target_affine=ref_aff, target_shape=ref_shape,
@@ -538,7 +531,7 @@ class BrainViewerStatsTab(QWidget):
             if dd.ndim > 3: dd = dd[..., 0]
             ov.disp_data = np.asarray(dd, dtype=np.float32)
         except Exception as e:
-            print(f"⚠️ Could not resample overlay '{ov.name}': {e}; showing on native grid.")
+            print(f" Could not resample overlay '{ov.name}': {e}; showing on native grid.")
             ov.disp_data = ov.data
 
     def _remove_overlay(self):
@@ -585,12 +578,12 @@ class BrainViewerStatsTab(QWidget):
             lo, hi = 0.0, 1.0
         thr = lo + (val / 1000.0) * (hi - lo)
         self.thr_slider_lbl.setText(f"{thr:.3f}")
-        # drive the existing positive-threshold spinbox (keeps everything in sync)
+        
         self.chk_pos.setChecked(True)
         self.thr_pos.blockSignals(True)
         self.thr_pos.setValue(thr)
         self.thr_pos.blockSignals(False)
-        self._queue()   # re-render with new threshold applied to the map
+        self._queue()   
 
     def _on_ext_slider(self, val):
         """Live minimum cluster extent (voxels)."""
@@ -598,7 +591,7 @@ class BrainViewerStatsTab(QWidget):
         self.min_extent.blockSignals(True)
         self.min_extent.setValue(val)
         self.min_extent.blockSignals(False)
-        # If clusters were already computed, recompute with the new extent.
+        
         if getattr(self, 'clusters', None):
             self._run_clusters()
 
@@ -684,7 +677,7 @@ class BrainViewerStatsTab(QWidget):
     def _on_zoom(self, v):
         self.zoom = v / 100.0; self._queue()
 
-    # ------------------------------------------------------ mouse interaction
+   
     def eventFilter(self, obj, event):
         canvases = {self.canvas_axial: 'axial', self.canvas_coronal: 'coronal',
                     self.canvas_sagittal: 'sagittal', self.canvas_single: self.view}
@@ -741,17 +734,17 @@ class BrainViewerStatsTab(QWidget):
             QMessageBox.warning(self, "Invalid MNI",
                                 "Please enter numeric X, Y, Z values.")
             return
-        # world(MNI) -> voxel via inverse affine
+       
         inv = np.linalg.inv(aff)
         v = inv @ np.array([x, y, z, 1.0])
         ijk = [int(round(v[0])), int(round(v[1])), int(round(v[2]))]
         ijk = [max(0, min(ijk[a], shape[a] - 1)) for a in range(3)]
         self.crosshair_ijk = tuple(ijk)
-        # keep each plane's slice index in sync with the crosshair
+        
         for view in ('axial', 'coronal', 'sagittal'):
             ax = self._axis_for_view(view)
             self.slice_idx[view] = ijk[ax]
-        # update the active single-view slider too
+       
         if not self.triplanar:
             ax = self._axis_for_view(self.view)
             self.slice_slider.blockSignals(True)
@@ -773,7 +766,7 @@ class BrainViewerStatsTab(QWidget):
             return
         img_w, img_h = pix.width(), pix.height()
         lab_w, lab_h = label.width(), label.height()
-        # pixmap is centered in the label (AlignCenter): subtract the offset
+        
         off_x = max(0, (lab_w - img_w) / 2.0)
         off_y = max(0, (lab_h - img_h) / 2.0)
         ix = event.pos().x() - off_x
@@ -785,34 +778,31 @@ class BrainViewerStatsTab(QWidget):
             if getattr(self, '_debug_click', False):
                 print("   -> outside pixmap bounds, ignored")
             return
-        # image pixel -> figure pixel (pixmap may be scaled vs native fig size)
+       e)
         fig = ax.figure
         fig_w_px = fig.get_figwidth() * fig.dpi
         fig_h_px = fig.get_figheight() * fig.dpi
         fx_px = ix * (fig_w_px / img_w)
         fy_px = iy * (fig_h_px / img_h)
-        # matplotlib display origin is bottom-left; Qt is top-left -> flip y
+        
         disp_y = fig_h_px - fy_px
         try:
             col, row = ax.transData.inverted().transform((fx_px, disp_y))
         except Exception:
             return
-        # (col, row) are data coords of the displayed slice (origin='lower', .T):
-        #   axial    col=X(i), row=Y(j)
-        #   coronal  col=X(i), row=Z(k)
-        #   sagittal col=Y(j), row=Z(k)
+        
         ijk = list(self.crosshair_ijk) if self.crosshair_ijk else [s // 2 for s in shape]
         if view == 'axial':
             ijk[0] = int(round(col)); ijk[1] = int(round(row))
         elif view == 'coronal':
             ijk[0] = int(round(col)); ijk[2] = int(round(row))
-        else:                     # sagittal
+        else:                     
             ijk[1] = int(round(col)); ijk[2] = int(round(row))
         ijk = [max(0, min(ijk[i], shape[i] - 1)) for i in range(3)]
         if getattr(self, '_debug_click', False):
             print(f"   -> col={col:.1f} row={row:.1f} -> ijk={ijk}")
         self.crosshair_ijk = tuple(ijk)
-        # Linked navigation: keep every plane's slice index on the crosshair
+        
         for vw in ('axial', 'coronal', 'sagittal'):
             ax2 = self._axis_for_view(vw)
             self.slice_idx[vw] = ijk[ax2]
@@ -831,7 +821,7 @@ class BrainViewerStatsTab(QWidget):
             x, y, z = vs.voxel_to_mni((i, j, k), aff)
             mni_xyz = (x, y, z)
             mni_s = f"({x:.0f}, {y:.0f}, {z:.0f})"
-        # value from active overlay (or first), sampled in its own grid if same shape
+        
         val_s = "—"
         ov = self._active() or (self.overlays[0] if self.overlays else None)
         if ov is not None:
@@ -840,8 +830,7 @@ class BrainViewerStatsTab(QWidget):
                 val_s = f"{v:.3f}"
         self.coord_lbl.setText(f"Voxel: ({i}, {j}, {k})    MNI: {mni_s}    Value: {val_s}")
 
-        # Cortical/subcortical anatomical label (Harvard-Oxford + Brodmann),
-        # plus white-matter tract labelling (JHU-ICBM: maxprob + probabilities).
+        
         if hasattr(self, 'anat_lbl'):
             if mni_xyz is not None and anat is not None:
                 try:
@@ -851,7 +840,7 @@ class BrainViewerStatsTab(QWidget):
                     ba_txt = f"  ·  {ba}" if ba and ba != '—' else ""
                     text = f"📍 GM: {region}{ba_txt}"
 
-                    # White-matter labelling (JHU-ICBM)
+                    
                     if wm is not None:
                         try:
                             winfo = wm.wm_label_at_mni(*mni_xyz)
@@ -859,11 +848,10 @@ class BrainViewerStatsTab(QWidget):
                             tract = winfo.get('tract', '—')
                             probs = wm.wm_tract_probs_at_mni(*mni_xyz, top=3)
                             parts = []
-                            # ICBM-DTI-81 region (this is where corpus callosum,
-                            # internal capsule, etc. are named)
+                            
                             if wregion and wregion != '—':
                                 parts.append(wregion)
-                            # probabilistic tracts, else the maxprob tract
+                            
                             if probs:
                                 parts.append(", ".join(f"{n} ({p:.0f}%)"
                                                        for n, p in probs))
@@ -933,7 +921,7 @@ class BrainViewerStatsTab(QWidget):
         if 0 <= r < len(self.clusters):
             c = self.clusters[r]
             self.crosshair_ijk = c['peak_voxel']
-            # move the slices to the peak so it's visible
+            
             i, j, k = c['peak_voxel']
             self.slice_idx = {'axial': k, 'coronal': j, 'sagittal': i}
             self._sync_slice_slider()
@@ -1068,7 +1056,7 @@ class BrainViewerStatsTab(QWidget):
             QMessageBox.information(self, "3D Surface needs nilearn",
                                     "The interactive 3D surface view requires nilearn.\n\n"
                                     "pip install nilearn")
-            print(f"⚠️ 3D surface unavailable: {e}")
+            print(f" 3D surface unavailable: {e}")
             return
 
         ov = self._active() or (self.overlays[0] if self.overlays else None)
@@ -1099,7 +1087,7 @@ class BrainViewerStatsTab(QWidget):
         except Exception as e:
             QMessageBox.warning(self, "3D Surface error",
                                 f"Could not build the 3D surface view:\n{e}")
-            print(f"⚠️ 3D surface error: {e}")
+            print(f" 3D surface error: {e}")
             import traceback; traceback.print_exc()
 
     def _render_glass(self):
@@ -1112,7 +1100,7 @@ class BrainViewerStatsTab(QWidget):
             import nibabel as nib
         except Exception as e:
             canvas.setText("Glass brain needs nilearn.\n\npip install nilearn")
-            print(f"⚠️ Glass brain unavailable: {e}")
+            print(f" Glass brain unavailable: {e}")
             return
 
         # Choose what to display: active overlay > first overlay > underlay
@@ -1145,9 +1133,8 @@ class BrainViewerStatsTab(QWidget):
                                         marker_size=40)
                 except Exception:
                     pass
-            fig.canvas.draw()   # ensure each panel's transData is valid
-            # Close the PREVIOUS glass fig (avoid leak), keep THIS one alive so
-            # its panel transforms remain valid for click mapping.
+            fig.canvas.draw()   
+            
             prev = getattr(self, '_glass_fig', None)
             if prev is not None and prev is not fig:
                 try:
@@ -1157,7 +1144,7 @@ class BrainViewerStatsTab(QWidget):
             self._glass_display = display
             self._glass_fig = fig
             buf = BytesIO()
-            # NO bbox_inches='tight' — cropping would break click mapping.
+            
             fig.savefig(buf, format='png', dpi=fig.dpi, facecolor='black',
                         pad_inches=0)
             buf.seek(0)
@@ -1166,7 +1153,7 @@ class BrainViewerStatsTab(QWidget):
             cw = max(1, canvas.width()); ch = max(1, canvas.height())
             scaled = pm.scaled(cw, ch, Qt.AspectRatioMode.KeepAspectRatio,
                                Qt.TransformationMode.SmoothTransformation)
-            # Record the displayed pixmap geometry for click mapping.
+            
             self._glass_pm_w = scaled.width()
             self._glass_pm_h = scaled.height()
             self._glass_native_w = pm.width()
@@ -1174,7 +1161,7 @@ class BrainViewerStatsTab(QWidget):
             canvas.setPixmap(scaled)
         except Exception as e:
             canvas.setText(f"Glass brain render error:\n{e}")
-            print(f"⚠️ Glass brain render error: {e}")
+            print(f" Glass brain render error: {e}")
             import traceback; traceback.print_exc()
 
     def _handle_glass_click(self, label, event):
@@ -1195,7 +1182,7 @@ class BrainViewerStatsTab(QWidget):
         pix = label.pixmap()
         if pix is None or pix.isNull():
             return
-        # label pixel -> displayed-pixmap pixel (centered in label)
+        
         pm_w = getattr(self, '_glass_pm_w', pix.width())
         pm_h = getattr(self, '_glass_pm_h', pix.height())
         lw, lh = label.width(), label.height()
@@ -1203,26 +1190,26 @@ class BrainViewerStatsTab(QWidget):
         iy = event.pos().y() - max(0, (lh - pm_h) / 2.0)
         if ix < 0 or iy < 0 or ix > pm_w or iy > pm_h:
             return
-        # displayed pixmap -> native figure pixels
+       
         nat_w = getattr(self, '_glass_native_w', pm_w)
         nat_h = getattr(self, '_glass_native_h', pm_h)
         fx_px = ix * (nat_w / pm_w)
         fy_px = iy * (nat_h / pm_h)
-        # figure pixel (top-left origin) -> matplotlib display (bottom-left)
+        
         fig_h_px = fig.get_figheight() * fig.dpi
         disp_x = fx_px
         disp_y = fig_h_px - fy_px
 
-        # Current crosshair in MNI (depth fallback for the collapsed axis)
+        
         cx, cy, cz = vs.voxel_to_mni(self.crosshair_ijk, aff) if self.crosshair_ijk \
             else (0.0, 0.0, 0.0)
         new_mni = [cx, cy, cz]
 
-        # Find the panel whose axes bbox (in display pixels) contains the click.
+       
         hit = None
         for key, slicer in display.axes.items():
             ax = slicer.ax
-            bbox = ax.get_window_extent()   # display pixels
+            bbox = ax.get_window_extent()  
             if bbox.x0 <= disp_x <= bbox.x1 and bbox.y0 <= disp_y <= bbox.y1:
                 hit = (key, slicer, ax); break
         if hit is None:
@@ -1231,15 +1218,15 @@ class BrainViewerStatsTab(QWidget):
             return
         key, slicer, ax = hit
         xdata, ydata = ax.transData.inverted().transform((disp_x, disp_y))
-        direction = slicer.direction   # 'l','r','y','z'
-        # Panel data axes (verified): l/r -> (x=MNI Y, y=MNI Z);
-        #   y(coronal) -> (x=MNI X, y=MNI Z);  z(axial) -> (x=MNI X, y=MNI Y)
+        direction = slicer.direction  
+        
+        
         if direction in ('l', 'r'):
-            new_mni[1] = xdata; new_mni[2] = ydata    # set Y, Z (X kept)
+            new_mni[1] = xdata; new_mni[2] = ydata    
         elif direction == 'y':
-            new_mni[0] = xdata; new_mni[2] = ydata    # set X, Z (Y kept)
+            new_mni[0] = xdata; new_mni[2] = ydata    
         else:  # 'z' axial
-            new_mni[0] = xdata; new_mni[1] = ydata    # set X, Y (Z kept)
+            new_mni[0] = xdata; new_mni[1] = ydata   
 
         # MNI -> voxel
         inv = np.linalg.inv(aff)
@@ -1257,15 +1244,13 @@ class BrainViewerStatsTab(QWidget):
 
     def _render_one(self, view, idx, canvas, small):
         shape = self._ref_shape()
-        # figure aspect matches the SLICE data aspect (cols x rows) so the axes
-        # fill the figure with no letterboxing -> click mapping stays exact and
-        # anatomy is undistorted. Pixel size scales with the canvas.
+        
         if view == 'axial':
-            cols, rows = shape[0], shape[1]       # X, Y
+            cols, rows = shape[0], shape[1]      
         elif view == 'coronal':
-            cols, rows = shape[0], shape[2]       # X, Z
+            cols, rows = shape[0], shape[2]       
         else:
-            cols, rows = shape[1], shape[2]       # Y, Z
+            cols, rows = shape[1], shape[2]       
         long_px = max(canvas.width(), canvas.height(), 200)
         dpi = 90
         scale = long_px / dpi / max(cols, rows)
@@ -1279,7 +1264,7 @@ class BrainViewerStatsTab(QWidget):
             uw = np.clip((u - self.under_vmin) / (self.under_vmax - self.under_vmin + 1e-6), 0, 1)
             ax.imshow(uw, cmap=self.under_cmap, origin='lower', interpolation='bilinear', aspect='auto')
 
-        # overlays (rendered from display-grid data so they always align)
+        
         for ov in self.overlays:
             if not ov.visible:
                 continue
@@ -1288,7 +1273,7 @@ class BrainViewerStatsTab(QWidget):
                 continue
             s = self._slice_2d(od, view, idx)
             disp = s.copy()
-            # apply thresholds to what is shown
+            
             tp = self.thr_pos.value() if self.chk_pos.isChecked() else None
             tn = self.thr_neg.value() if self.chk_neg.isChecked() else None
             keep = np.zeros(disp.shape, dtype=bool)
@@ -1315,14 +1300,12 @@ class BrainViewerStatsTab(QWidget):
 
         ax.set_xticks([]); ax.set_yticks([])
         ax.set_axis_off()
-        # axes fill the whole figure so screen pixels map 1:1 to data extent
+        
         ax.set_position([0, 0, 1, 1])
         if small:
             ax.text(0.5, 0.97, view.capitalize(), transform=ax.transAxes,
                     ha='center', va='top', color='#6e8cb8', fontsize=8)
-        # Store the data extent AND the live axes for exact click->data mapping.
-        # We must draw the figure (so transData is valid) and must NOT close it,
-        # or transData becomes unusable. Keep one figure per view alive.
+        
         if not hasattr(self, '_view_extent'):
             self._view_extent = {}
         if not hasattr(self, '_view_ax'):
@@ -1330,8 +1313,7 @@ class BrainViewerStatsTab(QWidget):
         self._view_extent[view] = (ax.get_xlim(), ax.get_ylim())
         self._view_ax[view] = ax
         self._fig_to_label(fig, canvas)
-        # NOTE: do not plt.close(fig) — keep it alive so transData stays valid.
-        # Close any *previous* figure for this view to avoid leaks.
+        
         prev = getattr(self, '_view_fig', {}).get(view)
         if prev is not None and prev is not fig:
             try:
@@ -1344,10 +1326,7 @@ class BrainViewerStatsTab(QWidget):
 
     def _draw_crosshair(self, ax, view, shape):
         i, j, k = self.crosshair_ijk
-        # Plain .T with origin='lower':
-        #   axial    -> col = X(i), row = Y(j)
-        #   coronal  -> col = X(i), row = Z(k)
-        #   sagittal -> col = Y(j), row = Z(k)
+        
         if view == 'axial':
             col = i; row = j
         elif view == 'coronal':
@@ -1359,25 +1338,20 @@ class BrainViewerStatsTab(QWidget):
 
     def _fig_to_label(self, fig, label):
         buf = BytesIO()
-        # Save at the figure's own dpi so the pixmap's pixel size is exactly
-        # figwidth*dpi x figheight*dpi — required for accurate click mapping.
+        
         fig.savefig(buf, format='png', dpi=fig.dpi, pad_inches=0,
                     facecolor=fig.get_facecolor())
         buf.seek(0)
         img = QImage(); img.loadFromData(buf.getvalue())
         pm = QPixmap.fromImage(img)
-        # Scale to fit the label so the DISPLAYED pixmap size equals pm.width()/
-        # height() (what _handle_click reads). Keeps aspect; centered by Align.
+        
         lw, lh = max(1, label.width()), max(1, label.height())
         if pm.width() > lw or pm.height() > lh:
             pm = pm.scaled(lw, lh, Qt.AspectRatioMode.KeepAspectRatio,
                            Qt.TransformationMode.SmoothTransformation)
         label.setPixmap(pm)
 
-    # ----------------------------------------------------------------- style
-    # The brain display (#brainCanvas / #viewerArea / #canvasHolder) stays
-    # true black in BOTH themes — that's the imaging convention. Only the
-    # surrounding panels switch between light (win11) and dark (navy).
+   
     _DARK_STYLE = """
             QWidget { color:#cdd9e8; }
             #leftRail, #rightPanel { background:#0a0f1c; }
