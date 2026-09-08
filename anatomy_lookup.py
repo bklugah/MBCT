@@ -16,13 +16,11 @@ one-time download/parse cost and subsequent calls are fast.
 
 import numpy as np
 
-_HO = None          # cached (cort_img, cort_labels, sub_img, sub_labels, inv_affines)
+_HO = None         
 _LOAD_FAILED = False
 
 
-# --- Harvard-Oxford region name -> classical Brodmann-area equivalent ---------
-# Best-effort mapping from HO cortical structure names to Brodmann areas /
-# classical functional names. Keys are matched case-insensitively as substrings.
+
 _BRODMANN = [
     ("Precentral Gyrus",                         "BA 4 — primary motor cortex"),
     ("Postcentral Gyrus",                        "BA 1/2/3 — primary somatosensory cortex"),
@@ -72,7 +70,7 @@ def _brodmann_for(region_name):
     for key, ba in _BRODMANN:
         if key.lower() in rn:
             return ba
-    return "—"  # no classical BA equivalent (e.g. subcortical structures)
+    return "—"  
 
 
 def _load_ho():
@@ -175,8 +173,7 @@ def subregions_for_mask(mask, affine, max_regions=12, min_pct=1.0):
             name = labels[idx]
             if name == "Background":
                 continue
-            # Avoid double-counting: cortical takes precedence; only add a
-            # subcortical region if not already represented cortically.
+            
             counts[name] = counts.get(name, 0) + int((vals == idx).sum())
 
     out = []
