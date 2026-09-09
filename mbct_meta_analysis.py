@@ -1,3 +1,5 @@
+#Klugah-Brown
+
 """
 MBCT Meta-Analysis Tool — standalone edition.
 
@@ -8,12 +10,12 @@ full MBCT suite:
     • MACM                 (meta-analytic coactivation; inside Coordinate→Terms)
 
 Shares the exact same code as the full app (utilities_tab.UtilitiesTab with
-meta_only=True), so fixes made to the full suite apply here automatically.
+meta_only=True)
 """
 
 import sys
 import matplotlib
-matplotlib.use('Agg')   # never FigureCanvasQTAgg — QLabel-based rendering only
+matplotlib.use('Agg')   
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel
 from PyQt6.QtCore import Qt
@@ -37,19 +39,16 @@ class MetaAnalysisWindow(QMainWindow):
         v.setContentsMargins(0, 0, 0, 0)
         v.setSpacing(0)
 
-        # slim header
         header = QLabel(f"  {APP_TITLE}")
         header.setFont(QFont("Segoe UI", 13, QFont.Weight.Bold))
         header.setStyleSheet("color:#e6e9ef; background:#16171f; padding:12px 6px;")
         v.addWidget(header)
 
-        # the meta-analysis-only utilities panel
         self.tools = UtilitiesTab(parent_main=None, meta_only=True)
         v.addWidget(self.tools, 1)
 
         self.setCentralWidget(central)
 
-        # window icon (fall back silently if missing)
         try:
             icon_path = tm.logo_for_theme(tm.CURRENT, variant='icon')
             if icon_path:
