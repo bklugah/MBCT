@@ -1,3 +1,4 @@
+#Klugah-Brown
 """
 mbct_build_common.py — shared PyInstaller helpers for every MBCT edition.
 
@@ -63,7 +64,7 @@ def add_json_bundles(datas, root, names):
             print(f"[MBCT] WARNING: {j} not found — that panel will show a hint")
 
 
-# ------------------------------------------------------------- package deps
+
 def collect_packages(pkgs):
     """collect_all() over a list of packages, reporting what each yielded."""
     datas, binaries, hidden = [], [], []
@@ -100,7 +101,7 @@ def collect_pkg_tree(datas, pkgname):
         print(f"[MBCT] collect_pkg_tree({pkgname}) failed: {e}")
 
 
-# Packages whose data/submodules PyInstaller cannot infer statically.
+
 DYNAMIC_PKGS_FULL = ['vtk', 'vtkmodules', 'nimare', 'pymare', 'regfusion',
                      'sympy', 'nilearn', 'nibabel', 'sklearn', 'scipy',
                      'statsmodels', 'pandas', 'matplotlib',
@@ -109,8 +110,7 @@ DYNAMIC_PKGS_META = ['nimare', 'pymare', 'sympy', 'nilearn', 'nibabel',
                      'sklearn', 'scipy', 'statsmodels', 'pandas', 'matplotlib']
 DYNAMIC_PKGS_LIGHT = ['nilearn', 'nibabel', 'scipy', 'matplotlib', 'pandas']
 
-# sympy.stats is reached only through exec("from sympy.stats import *") inside
-# pymare, so PyInstaller's static analysis cannot see it.
+
 SYMPY_HIDDEN = ['sympy.stats', 'sympy.stats.rv', 'sympy.stats.crv',
                 'sympy.stats.drv', 'sympy.stats.frv']
 VTK_HIDDEN = ['vtk.numpy_interface', 'vtk.numpy_interface.dataset_adapter',
