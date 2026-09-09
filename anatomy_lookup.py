@@ -100,7 +100,7 @@ def _load_ho():
             'sub_labels':  list(sub.labels),
         }
     except Exception as e:
-        print(f"⚠️ Harvard-Oxford atlas unavailable ({e}); anatomical labels disabled.")
+        print(f"Harvard-Oxford atlas unavailable ({e}); anatomical labels disabled.")
         _LOAD_FAILED = True
         _HO = None
     return _HO
@@ -127,7 +127,7 @@ def label_at_mni(x, y, z):
     ho = _load_ho()
     if ho is None:
         return {'region': '—', 'brodmann': '—'}
-    # Prefer cortical; fall back to subcortical (e.g. hippocampus, amygdala).
+    
     name = _region_at(ho, 'cort', x, y, z)
     if name is None:
         name = _region_at(ho, 'sub', x, y, z)
@@ -150,7 +150,7 @@ def subregions_for_mask(mask, affine, max_regions=12, min_pct=1.0):
     mask = np.asarray(mask) > 0
     if not mask.any():
         return []
-    ijk = np.argwhere(mask)                       # voxel indices in network space
+    ijk = np.argwhere(mask)                       
     # network voxel -> world (MNI)
     world = (affine @ np.c_[ijk, np.ones(len(ijk))].T).T[:, :3]
 
