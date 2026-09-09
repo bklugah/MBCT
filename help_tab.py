@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
 
-# Reuse the existing rich content panels (kept in home_tab for compatibility)
 from home_tab import FeaturesTab, WalkthroughTab, QuickStartTab
 
 
@@ -136,6 +135,6 @@ class HelpTab(QWidget):
         layout.setSpacing(0)
 
         tabs = QTabWidget()
-        tabs.addTab(ManualTab(), "📖 Manual")
-        tabs.addTab(AboutTab(), "ℹ️ About")
+        tabs.addTab(ManualTab(), "Manual")
+        tabs.addTab(AboutTab(), "About")
         layout.addWidget(tabs)
