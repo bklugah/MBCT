@@ -34,7 +34,7 @@ import connectivity_view as cvx
 class ConnectivityTab(QWidget):
     """Seed-based FC connectome viewer."""
 
-    file_ready = pyqtSignal(str)   # so a loaded map can be sent to the Viewer
+    file_ready = pyqtSignal(str)  
 
     def __init__(self, parent_main=None):
         super().__init__()
