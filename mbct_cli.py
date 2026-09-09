@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#Klugah-Brown
 """
 mbct_cli.py — command-line interface to the MBCT annotation pipeline.
 
@@ -9,27 +9,6 @@ molecular and transcriptomic annotations of the matched networks.
 Designed for batch processing, scripted pipelines and headless/HPC use, and to
 make an analysis reproducible from a single citable command.
 
-Examples
---------
-List the atlases available in a given space:
-
-    python mbct_cli.py atlases --space FSLMNI2mm
-
-Annotate one map:
-
-    python mbct_cli.py analyze --input map.nii.gz --atlas EG17 \\
-        --out results/
-
-Batch-annotate a directory of maps:
-
-    python mbct_cli.py analyze --input "maps/*.nii.gz" --atlas EG17 \\
-        --out results/ --format csv
-
-Look up the anatomy at a coordinate:
-
-    python mbct_cli.py label --coord 28 -8 8
-
-Exit codes:  0 success · 1 usage/input error · 2 analysis failure
 """
 
 from __future__ import annotations
@@ -45,13 +24,10 @@ from pathlib import Path
 
 __version__ = "1.0.0"
 
-# Keep matplotlib headless — the CLI must run without a display.
+
 os.environ.setdefault("MPLBACKEND", "Agg")
 
 
-# ---------------------------------------------------------------------------
-# small output helpers
-# ---------------------------------------------------------------------------
 def info(msg):
     print(msg, file=sys.stderr)
 
@@ -65,9 +41,6 @@ def die(msg, code=1):
     sys.exit(code)
 
 
-# ---------------------------------------------------------------------------
-# annotation bundles
-# ---------------------------------------------------------------------------
 def _bundle_path(name):
     """Locate a precomputed annotation bundle."""
     cands = []
@@ -97,7 +70,6 @@ def load_bundle(name):
         warn(f"could not read {name}: {e}")
         return None, False
 
-    # Detect the shipped placeholder bundles so we never present them as results.
     is_sample = False
     meta = data.get("_meta", {}) if isinstance(data, dict) else {}
     if isinstance(meta, dict) and meta.get("sample"):
@@ -126,9 +98,6 @@ def annotations_for(bundle, atlas, network):
     return None
 
 
-# ---------------------------------------------------------------------------
-# commands
-# ---------------------------------------------------------------------------
 def cmd_atlases(args):
     """List reference atlases available for a space."""
     try:
@@ -255,16 +224,14 @@ def _analyze_one(path, args, bundles):
         "Data_Threshold": args.threshold,
     }
 
-    # Inject the config directly onto the CBIG analyser. This works regardless
-    # of which application.py version is installed, because cbig_analysis.analyze()
-    # reads this attribute as a fallback.
+   
     try:
         if getattr(app, "cbig", None) is not None:
             app.cbig._ui_data_config = data_config
     except Exception as e:
         warn(f"could not inject data_config: {e}")
 
-    # Call analyze_gray_matter, adapting to whichever signature is present.
+    
     import inspect
     try:
         supports_cfg = "data_config" in inspect.signature(
@@ -388,9 +355,6 @@ def cmd_analyze(args):
     return 2 if failures and not all_rows else 0
 
 
-# ---------------------------------------------------------------------------
-# argument parsing
-# ---------------------------------------------------------------------------
 def build_parser():
     p = argparse.ArgumentParser(
         prog="mbct",
