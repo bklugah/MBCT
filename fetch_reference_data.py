@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#Klugah-Brown
 """
 fetch_reference_data.py — obtain the reference datasets MBCT needs.
 
@@ -33,7 +33,7 @@ ROOT = Path(__file__).resolve().parent
 
 GREEN, RED, YELLOW, RESET = "\033[32m", "\033[31m", "\033[33m", "\033[0m"
 if sys.platform.startswith("win"):
-    try:                                   # enable ANSI colours on Windows 10+
+    try:                                   
         import colorama; colorama.just_fix_windows_console()
     except Exception:
         GREEN = RED = YELLOW = RESET = ""
@@ -44,9 +44,6 @@ def miss(msg):  print(f"  {RED}missing{RESET}  {msg}")
 def note(msg):  print(f"  {YELLOW}note{RESET}     {msg}")
 
 
-# ---------------------------------------------------------------------------
-# checks — each returns True when the dataset is usable
-# ---------------------------------------------------------------------------
 def check_corpus() -> bool:
     """Neurosynth v7 corpus: four files in neurosynth_cache/corpus/."""
     d = ROOT / "neurosynth_cache" / "corpus"
@@ -78,7 +75,7 @@ def check_cbig() -> bool:
     if absent:
         miss(f"CBIG atlases — missing subfolder(s): {', '.join(absent)}")
         return False
-    # the atlases folder must actually contain images, not just empty dirs
+    
     n = len(list((d / "atlases").rglob("*.nii*")))
     if n == 0:
         miss(f"CBIG atlases — {d/'atlases'} contains no NIfTI files "
@@ -126,7 +123,7 @@ def check_bundles() -> bool:
     if absent:
         miss(f"annotation bundles — missing: {', '.join(absent)}")
         return False
-    # warn if they are the shipped placeholders rather than real results
+    
     import json
     sampled = []
     for n in names:
@@ -144,9 +141,7 @@ def check_bundles() -> bool:
     return True
 
 
-# ---------------------------------------------------------------------------
-# fetchers
-# ---------------------------------------------------------------------------
+
 def fetch_corpus() -> bool:
     """Download the Neurosynth v7 corpus with NiMARE."""
     dest = ROOT / "neurosynth_cache" / "corpus"
