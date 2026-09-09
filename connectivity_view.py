@@ -26,9 +26,7 @@ except Exception:
     ndimage = None
 
 
-# --------------------------------------------------------------------------
-# geometry helpers
-# --------------------------------------------------------------------------
+
 def voxel_to_mni(ijk, affine):
     v = np.asarray([ijk[0], ijk[1], ijk[2], 1.0], dtype=float)
     return tuple(float(c) for c in (affine @ v)[:3])
@@ -40,9 +38,7 @@ def mni_to_voxel(xyz, affine):
     return tuple(int(round(c)) for c in v[:3])
 
 
-# --------------------------------------------------------------------------
-# node / connection extraction
-# --------------------------------------------------------------------------
+
 def find_seed(data, affine):
     """Seed = global maximum of the FC map (|value| max)."""
     d = np.nan_to_num(np.asarray(data, dtype=np.float32))
@@ -69,7 +65,7 @@ def extract_connections(data, affine, threshold=0.3, min_extent=20,
     if not mask.any():
         return seed_mni, []
 
-    lab, n = ndimage.label(mask)          # 26-connectivity default is 6; fine here
+    lab, n = ndimage.label(mask)          
     targets = []
     for cid in range(1, n + 1):
         sel = (lab == cid)
@@ -79,7 +75,7 @@ def extract_connections(data, affine, threshold=0.3, min_extent=20,
         vals = np.where(sel, np.abs(d), 0.0)
         pk = np.unravel_index(np.argmax(vals), d.shape)
         xyz = voxel_to_mni(pk, affine)
-        # skip the cluster that contains (or sits on top of) the seed
+        
         dist = float(np.linalg.norm(np.asarray(xyz) - np.asarray(seed_mni)))
         if dist < float(exclude_radius):
             continue
@@ -102,9 +98,6 @@ def build_adjacency(seed_xyz, targets):
     return np.asarray(coords, dtype=float), adj
 
 
-# --------------------------------------------------------------------------
-# rendering
-# --------------------------------------------------------------------------
 def _labels_for(xyz):
     """Anatomical label for a coordinate: gray-matter region (+ WM tract)."""
     gm = wm = None
@@ -133,7 +126,7 @@ def overview_figure(seed_xyz, targets, figsize=(9, 3.2), node_size=55,
     from nilearn import plotting as niplot
 
     coords, adj = build_adjacency(seed_xyz, targets)
-    # seed drawn larger and in a distinct colour
+    
     colors = ['#39ff14'] + ['#ff5252' if t['value'] > 0 else '#38b6ff'
                             for t in targets]
     sizes = [node_size * 1.8] + [node_size] * len(targets)
