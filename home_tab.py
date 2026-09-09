@@ -54,7 +54,7 @@ class WelcomeTab(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Theme-aware hero surface (matches the app's light/dark palette)
+        
         try:
             import theme_manager as _tm
             dark = (_tm.CURRENT == 'dark')
@@ -74,7 +74,7 @@ class WelcomeTab(QWidget):
         outer.setContentsMargins(56, 0, 56, 0)
         outer.setSpacing(0)
 
-        # ---- top row: a logo in each upper corner ----
+        
         top_row = QHBoxLayout()
         self.logo_left = QLabel()
         self.logo_right = QLabel()
@@ -89,7 +89,7 @@ class WelcomeTab(QWidget):
 
         outer.addStretch(1)
 
-        # ---- hero block (enlarged, unified font) ----
+        
         self.badge = AnimatedLabel("MULTIMODAL NEUROIMAGING ANALYTICS")
         self.badge.setFont(QFont("Segoe UI", 12, QFont.Weight.Medium))
         self.badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -121,15 +121,15 @@ class WelcomeTab(QWidget):
 
         outer.addSpacing(42)
 
-        # ---- feature row ----
+        
         row = QHBoxLayout()
         row.setSpacing(22)
         row.addStretch()
         features = [
-            ("🧠", "Functional", "Network correspondence\n& meta-analytic decoding", "#3b82f6"),
-            ("⚛",  "Molecular",  "PET receptor density\nmapping (neuromaps)", "#c084fc"),
-            ("🧬", "Transcriptomic", "Gene expression\nprofiles (AHBA)", "#34d399"),
-            ("🔀", "Convergence", "Cross-modal\nassociation analysis", "#f0a93b"),
+            ("Functional", "Network correspondence\n& meta-analytic decoding", "#3b82f6"),
+            ("Molecular",  "PET receptor density\nmapping (neuromaps)", "#c084fc"),
+            ("Transcriptomic", "Gene expression\nprofiles (AHBA)", "#34d399"),
+            ("Convergence", "Cross-modal\nassociation analysis", "#f0a93b"),
         ]
         self.feature_cards = []
         for icon, title, desc, color in features:
@@ -220,7 +220,7 @@ class WelcomeTab(QWidget):
         anim.setEndValue(g)
         anim.setEasingCurve(QEasingCurve.Type.OutQuad)
         anim.start()
-        self._last_anim = anim  # keep ref so it isn't GC'd
+        self._last_anim = anim 
 
 
 class FeaturesTab(QWidget):
@@ -438,7 +438,7 @@ class WalkthroughTab(QWidget):
         layout.setContentsMargins(30, 30, 30, 30)
         layout.setSpacing(20)
         
-        # Header
+        
         header_layout = QHBoxLayout()
         self.title_label = QLabel()
         self.title_label.setFont(QFont("Segoe UI", 24, QFont.Weight.Bold))
@@ -446,14 +446,14 @@ class WalkthroughTab(QWidget):
         header_layout.addWidget(self.title_label)
         header_layout.addStretch()
         
-        # Step indicator
+        
         self.step_indicator = QLabel()
         self.step_indicator.setFont(QFont("Segoe UI", 12))
         self.step_indicator.setStyleSheet("color: #a0b8d4;")
         header_layout.addWidget(self.step_indicator)
         layout.addLayout(header_layout)
         
-        # Progress bar
+        
         self.progress = QProgressBar()
         self.progress.setMaximum(len(self.steps) - 1)
         self.progress.setStyleSheet("""
@@ -469,7 +469,7 @@ class WalkthroughTab(QWidget):
         """)
         layout.addWidget(self.progress)
         
-        # Content area
+       
         content_frame = QFrame()
         content_frame.setStyleSheet(
             "QFrame { background-color: #1a2a3a; border: 1px solid #2a3a5a; "
@@ -478,7 +478,7 @@ class WalkthroughTab(QWidget):
         content_layout = QVBoxLayout(content_frame)
         content_layout.setSpacing(15)
         
-        # Icon and description
+        
         desc_layout = QHBoxLayout()
         self.icon_label = QLabel()
         self.icon_label.setFont(QFont("Segoe UI", 48))
@@ -494,7 +494,7 @@ class WalkthroughTab(QWidget):
         
         content_layout.addLayout(desc_layout)
         
-        # Details list
+       
         self.details_label = QLabel()
         self.details_label.setFont(QFont("Segoe UI", 11))
         self.details_label.setStyleSheet("color: #a0b8d4; line-height: 1.8;")
@@ -503,7 +503,7 @@ class WalkthroughTab(QWidget):
         
         layout.addWidget(content_frame)
         
-        # Navigation buttons
+        
         nav_layout = QHBoxLayout()
         nav_layout.setSpacing(10)
         
@@ -561,7 +561,7 @@ class WalkthroughTab(QWidget):
             self.step_indicator.setText(f"{index + 1} of {len(self.steps)}")
             self.progress.setValue(index)
             
-            # Update button states
+           
             self.prev_btn.setEnabled(index > 0)
             self.next_btn.setEnabled(index < len(self.steps) - 1)
     
@@ -588,13 +588,13 @@ class QuickStartTab(QWidget):
         layout.setContentsMargins(30, 30, 30, 30)
         layout.setSpacing(20)
         
-        # Title
+        
         title = QLabel("🚀 Get Started in 5 Minutes")
         title.setFont(QFont("Segoe UI", 28, QFont.Weight.Bold))
         title.setStyleSheet("color: #38b6ff;")
         layout.addWidget(title)
         
-        # Scroll area
+        
         scroll = QScrollArea()
         scroll.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
         scroll.setWidgetResizable(True)
@@ -651,7 +651,7 @@ class QuickStartTab(QWidget):
             card = self._create_step_card(step_title, step_items)
             scroll_layout.addWidget(card)
         
-        # Tips section
+        
         tips_card = self._create_tips_card()
         scroll_layout.addWidget(tips_card)
         
