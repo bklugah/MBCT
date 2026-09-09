@@ -1,3 +1,4 @@
+#Klugah-Brown
 """
 MBCT Brain Viewer — standalone edition.
 
@@ -25,7 +26,7 @@ Shares the exact same code as the full app, so fixes apply everywhere.
 
 import sys
 import matplotlib
-matplotlib.use('Agg')   # never FigureCanvasQTAgg — QLabel-based rendering only
+matplotlib.use('Agg')   
 
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QLabel, QTabWidget)
@@ -57,7 +58,7 @@ class BrainViewerWindow(QMainWindow):
 
         self.tabs = QTabWidget()
         self.viewer = BrainViewerStatsTab()
-        # only the lightweight map tools (no NiMARE / corpus dependencies)
+      
         self.tools = UtilitiesTab(parent_main=self, tools='maps')
         self.connectivity = ConnectivityTab(parent_main=self)
 
@@ -67,7 +68,7 @@ class BrainViewerWindow(QMainWindow):
         v.addWidget(self.tabs, 1)
         self.setCentralWidget(central)
 
-        # "Open in Viewer" from any tool -> load it and switch to the viewer
+        
         try:
             self.tools.file_ready.connect(self._open_in_viewer)
         except Exception as e:
