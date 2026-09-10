@@ -1,3 +1,4 @@
+#Klugah-Brown 2026
 """
 whitematter_lookup.py — JHU-ICBM white-matter anatomical lookup.
 
@@ -28,9 +29,6 @@ _LOAD_FAILED = False
 _STATUS = "not loaded"
 
 
-# --------------------------------------------------------------------------
-# file discovery
-# --------------------------------------------------------------------------
 def _looks_like_nifti(p):
     low = p.lower()
     return (low.endswith('.nii') or low.endswith('.nii.gz')
@@ -80,27 +78,22 @@ def _atlas_dir():
     return None
 
 
-# --------------------------------------------------------------------------
-# robust NIfTI loading (handles "_nii.gz" style names nibabel can't infer)
-# --------------------------------------------------------------------------
 def _load_nifti(path):
     import nibabel as nib
     try:
         return nib.load(path)
     except Exception:
         pass
-    # Fall back: read bytes ourselves, gunzip if needed, build from file map.
+    
     with open(path, 'rb') as fh:
         raw = fh.read()
-    if raw[:2] == b'\x1f\x8b':                    # gzip magic
+    if raw[:2] == b'\x1f\x8b':                    
         raw = gzip.decompress(raw)
     fh_obj = nib.FileHolder(fileobj=io.BytesIO(raw))
     return nib.Nifti1Image.from_file_map({'header': fh_obj, 'image': fh_obj})
 
 
-# --------------------------------------------------------------------------
-# XML label dictionaries
-# --------------------------------------------------------------------------
+
 def _parse_xml_names(xml_path):
     """FSL atlas XML -> list addressable by atlas voxel value (0 = Background)."""
     if not xml_path or not os.path.exists(xml_path):
@@ -117,13 +110,11 @@ def _parse_xml_names(xml_path):
     if not names:
         return None
     hi = max(names)
-    # FSL XML index is 0-based over labels; maxprob voxel value v -> XML index v-1
+    
     return ['Background'] + [names.get(i, f'label_{i}') for i in range(hi + 1)]
 
 
-# --------------------------------------------------------------------------
-# loading / caching
-# --------------------------------------------------------------------------
+
 def _load():
     global _CACHE, _LOAD_FAILED, _STATUS
     if _CACHE is not None or _LOAD_FAILED:
@@ -182,7 +173,7 @@ def _ensure_prob():
         return c
     try:
         p = _find(c['_dir'], ('tracts', 'prob', '1mm'))
-        # avoid picking the maxprob file
+        
         if p and 'maxprob' in os.path.basename(p).lower():
             p = None
             for nm in sorted(os.listdir(c['_dir'])):
@@ -194,7 +185,7 @@ def _ensure_prob():
             raise FileNotFoundError("probabilistic tract atlas not found")
         print(f"[wm]   probs  : {os.path.basename(p)}")
         img = _load_nifti(p)
-        c['prob_data'] = np.asarray(img.dataobj)      # 4D (x,y,z,n_tracts)
+        c['prob_data'] = np.asarray(img.dataobj)      
         c['prob_inv'] = np.linalg.inv(img.affine)
     except Exception as e:
         print(f"[wm] probabilistic tract atlas unavailable ({e}).")
@@ -202,9 +193,6 @@ def _ensure_prob():
     return c
 
 
-# --------------------------------------------------------------------------
-# public API
-# --------------------------------------------------------------------------
 def _value_at(data, inv, x, y, z):
     vox = inv @ np.array([x, y, z, 1.0])
     i, j, k = (int(round(v)) for v in vox[:3])
