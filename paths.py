@@ -1,3 +1,4 @@
+#Klugah-Brown 2026
 """
 paths.py — portable path resolution for MBCT.
 
@@ -24,14 +25,13 @@ APP_NAME = "MBCT"
 
 def resource_dir() -> Path:
     """Directory containing bundled read-only resources."""
-    # PyInstaller sets sys._MEIPASS (one-file: temp unpack dir; one-folder: the
-    # app dir). sys.frozen marks a packaged build.
+    
     if getattr(sys, "frozen", False):
         base = getattr(sys, "_MEIPASS", None)
         if base:
             return Path(base)
         return Path(sys.executable).resolve().parent
-    # Running from source: this file's directory is the project root.
+    
     return Path(__file__).resolve().parent
 
 
