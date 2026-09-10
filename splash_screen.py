@@ -1,3 +1,4 @@
+#Klugah-Brown 2026
 """Splash screen for Brain Network Characterization Tool."""
 
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel
