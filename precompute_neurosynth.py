@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#Klugah-Brown 2026
 """
 precompute_neurosynth.py  —  DEVELOPER-SIDE, RUN ONCE.
 
