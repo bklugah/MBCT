@@ -42,14 +42,9 @@ from pathlib import Path
 import numpy as np
 import nibabel as nib
 
-# ---------------------------------------------------------------------------
-#  Term filtering — keep FUNCTION-describing terms, drop anatomy / method / junk
-# ---------------------------------------------------------------------------
-# Neurosynth's "terms" vocabulary contains many non-cognitive words. We drop
-# anatomical labels, acquisition/method words, statistics words, and generic
-# study-design filler so the panel reads like real functional descriptors.
+
 TERM_BLACKLIST = {
-    # acquisition / method / modality
+    
     "fmri", "mri", "pet", "eeg", "meg", "bold", "voxel", "voxels", "voxelwise",
     "imaging", "image", "images", "scan", "scans", "scanner", "scanning",
     "signal", "signals", "magnetic", "resonance", "echo", "slice", "slices",
@@ -114,8 +109,7 @@ def is_functional_term(term: str) -> bool:
     t = term.strip().lower()
     if not t or any(ch.isdigit() for ch in t):
         return False
-    # multi-word terms (e.g. 'working memory', 'theory mind') are almost always
-    # genuine functional descriptors -> keep unless every token is blacklisted
+    
     tokens = t.split()
     if len(tokens) > 1:
         return not all(tok in TERM_BLACKLIST for tok in tokens)
@@ -124,9 +118,7 @@ def is_functional_term(term: str) -> bool:
     return t not in TERM_BLACKLIST
 
 
-# ---------------------------------------------------------------------------
-#  Atlas label  ->  network-index resolution (mirrors the app's logic)
-# ---------------------------------------------------------------------------
+
 def load_network_assignment(atlas_path: Path):
     try:
         import scipy.io as sio
@@ -209,7 +201,7 @@ def autodetect_atlas_dir():
     importable), then common locations relative to this script.
     """
     candidates = []
-    # 1) Ask the app's own config, if available
+    
     try:
         from nct_application.cbig_config import CBIGConfig
         ad = CBIGConfig.get_atlas_dir()
@@ -217,7 +209,7 @@ def autodetect_atlas_dir():
             candidates.append(Path(ad))
     except Exception:
         pass
-    # 2) Common locations relative to this script / cwd
+    
     here = Path(__file__).resolve().parent
     roots = [here, Path.cwd()]
     rel = [
@@ -228,13 +220,13 @@ def autodetect_atlas_dir():
     for root in roots:
         for r in rel:
             candidates.append(root / r)
-        # also a recursive search for an 'atlases' folder that contains a known space
+        
         try:
             for hit in root.glob("**/atlases"):
                 candidates.append(hit)
         except Exception:
             pass
-    # Validate: a real atlas dir contains at least one known space subfolder
+    
     known_spaces = {"FSLMNI2mm", "LairdColin2mm", "ShenColin1mm",
                     "fs_LR_32k", "fsaverage6"}
     seen = set()
@@ -273,7 +265,7 @@ def main():
                          "can be continued without losing work")
     args = ap.parse_args()
 
-    # Resolve the atlas directory: explicit flag wins, else auto-detect
+    
     if args.atlas_dir:
         atlas_dir = Path(args.atlas_dir)
     else:
@@ -289,7 +281,7 @@ def main():
     spaces = [s.strip() for s in args.spaces.split(",") if s.strip()]
     only = set(s.strip() for s in args.only.split(",")) if args.only else None
 
-    # --- Lazy heavy imports (developer machine only) -----------------------
+    
     try:
         from nimare.extract import fetch_neurosynth
         from nimare.decode.discrete import ROIAssociationDecoder
@@ -318,14 +310,14 @@ def main():
                              source="abstract", vocab="terms",
                              return_type="dataset")
     dset = dsets[0]
-    print(f"✅ Neurosynth dataset: {len(dset.ids)} studies")
+    print(f"Neurosynth dataset: {len(dset.ids)} studies")
 
-    # --- Discover atlases ---------------------------------------------------
-    jobs = []  # (atlas_abbr, atlas_path, network_names)
+    
+    jobs = []  
     for sp in spaces:
         spdir = atlas_dir / sp
         if not spdir.is_dir():
-            print(f"⚠️  space dir not found: {spdir}")
+            print(f"space dir not found: {spdir}")
             continue
         for author in sorted(os.listdir(spdir)):
             adir = spdir / author
@@ -337,7 +329,7 @@ def main():
                     continue
                 nmf = names_dir / abbr
                 if not nmf.exists():
-                    # metric atlases without names -> single component
+                    
                     network_names = [abbr]
                 else:
                     network_names = nmf.read_text().split()
@@ -346,9 +338,9 @@ def main():
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    print(f"🧠 Decoding {len(jobs)} atlases…")
+    print(f"Decoding {len(jobs)} atlases…")
 
-    # Start fresh, or load an existing real bundle to resume/append into.
+    
     output = {"_meta": {
         "source": "Neurosynth v7 (terms/abstract) via NiMARE ROIAssociationDecoder",
         "statistic": "Pearson r between ROI mask and term meta-analytic map",
@@ -361,7 +353,7 @@ def main():
         try:
             with open(out_path, "r", encoding="utf-8") as fh:
                 existing = json.load(fh)
-            # Don't resume on top of the shipped SAMPLE bundle
+            
             if existing.get("_meta", {}).get("sample"):
                 print("ℹ️ Existing JSON is the SAMPLE bundle — ignoring it and "
                       "starting a real run.")
@@ -370,12 +362,12 @@ def main():
                     if k == "_meta":
                         continue
                     output[k] = v
-                    if v:  # non-empty atlas entry counts as done
+                    if v:  
                         already_done.add(k)
                 print(f"↩️  Resume: {len(already_done)} atlases already in {out_path.name}; "
                       f"they will be skipped.")
         except Exception as e:
-            print(f"⚠️ Could not read existing JSON for resume ({e}); starting fresh.")
+            print(f"Could not read existing JSON for resume ({e}); starting fresh.")
 
     def _save():
         with open(out_path, "w", encoding="utf-8") as fh:
@@ -391,11 +383,11 @@ def main():
             try:
                 decoder = ROIAssociationDecoder(masker=mask_img)
                 decoder.fit(dset)
-                df = decoder.transform()           # index=feature, column 'r'
+                df = decoder.transform()           
             except Exception as e:
-                print(f"      ⚠️ {net_name}: decode failed ({e})")
+                print(f"       {net_name}: decode failed ({e})")
                 continue
-            # clean + filter to functional terms, rank by r desc, take top N
+            
             rows = []
             for feat, r in df["r"].items():
                 term = clean_feature_name(str(feat))
@@ -406,10 +398,10 @@ def main():
             print(f"      {net_name:14} top: "
                   + ", ".join(f"{t}({r:.2f})" for t, r in rows[:3]))
         output[abbr] = atlas_entry
-        _save()   # incremental save after each atlas → interruption-safe
+        _save()   
 
     _save()
-    print(f"\n✅ Wrote {out_path}  ({out_path.stat().st_size/1024:.0f} KB)")
+    print(f"\n Wrote {out_path}  ({out_path.stat().st_size/1024:.0f} KB)")
     print("   This file ships with the app; users need neither NiMARE nor the database.")
 
 
