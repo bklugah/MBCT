@@ -66,7 +66,7 @@ sys.path.insert(0, str(project_dir))
 import numpy as np
 import nibabel as nib
 
-from precompute_neurosynth import autodetect_atlas_dir, network_masks  # noqa: E402
+from precompute_neurosynth import autodetect_atlas_dir, network_masks  
 
 
 RECEPTOR_GENES = [
