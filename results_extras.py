@@ -1,3 +1,4 @@
+#Klugah-Brown 2026
 """
 results_extras.py
 Shared helpers for the Results tab:
@@ -16,10 +17,6 @@ import json
 import numpy as np
 import nibabel as nib
 
-
-# ---------------------------------------------------------------------------
-# Per-network voxel masks
-# ---------------------------------------------------------------------------
 
 def network_mask(net_idx, atlas_vol, atlas_mode, label_map, threshold=0.0):
     """
