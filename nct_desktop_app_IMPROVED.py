@@ -1,3 +1,6 @@
+#Klugah-Brown 2026
+
+
 """
 NCT Desktop Application — Professional Dark Edition
 • Real network names from CBIG atlas files
@@ -12,27 +15,16 @@ NCT Desktop Application — Professional Dark Edition
 import os, sys, traceback
 from pathlib import Path
 
-# On Windows, the default console codec (cp1252) cannot encode the emoji used
-# in this app's print() diagnostics (✅ ⚠️ ❌ …), which would raise
-# UnicodeEncodeError and abort startup. Force UTF-8 on stdout/stderr so any
-# print statement is safe regardless of the console's codepage.
 for _stream in ('stdout', 'stderr'):
     try:
         getattr(sys, _stream).reconfigure(encoding='utf-8', errors='replace')
     except Exception:
         pass
 
-# Import new modules
 from home_tab import HomeTab
 from help_tab import HelpTab
 
-# ---------------------------------------------------------------------------
-# Edition selector.
-#   'core' -> Home, Analysis, Results, Help  (the edition described in the
-#             manuscript: the multimodal annotation pipeline only)
-#   'full' -> adds Brain Viewer, Connectivity and Utilities
-# Override with the MBCT_EDITION environment variable, or edit the default.
-# ---------------------------------------------------------------------------
+
 MBCT_EDITION = os.environ.get('MBCT_EDITION', 'full').strip().lower()
 if MBCT_EDITION not in ('core', 'full'):
     MBCT_EDITION = 'full'
@@ -69,10 +61,7 @@ from PyQt6.QtCore  import Qt, QThread, pyqtSignal, QSize, QEvent
 from PyQt6.QtGui   import QColor, QFont, QPalette
 
 import matplotlib
-# Pure Agg backend — render figures to pixmaps and show them in QLabels.
-# (FigureCanvasQTAgg is intentionally NOT used: instantiating it segfaults on
-# some PyQt6/matplotlib builds. QLabel + pixmap is rock-solid and we get
-# click/drag via Qt's own mouse events.)
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
@@ -90,14 +79,14 @@ class ClickableBrainLabel(QLabel):
     """
     pressed = pyqtSignal(float, float, str)
     dragged = pyqtSignal(float, float, str)
-    scrolled = pyqtSignal(int, str)   # (+1/-1, view_id)
+    scrolled = pyqtSignal(int, str)   
 
     def __init__(self, view_id=''):
         super().__init__()
         self.view_id = view_id
         self._dragging = False
         self.setMouseTracking(False)
-        # rendered image geometry within the label (for pixel mapping)
+        
         self._img_w = None
         self._img_h = None
 
@@ -121,7 +110,6 @@ class ClickableBrainLabel(QLabel):
         self.scrolled.emit(step, self.view_id)
 from io import BytesIO
 
-# Helper function to convert matplotlib figures to QPixmap
 def fig_to_pixmap(fig, width=400, height=300):
     """Convert matplotlib figure to QPixmap for display in Qt."""
     buf = BytesIO()
@@ -132,7 +120,6 @@ def fig_to_pixmap(fig, width=400, height=300):
     pixmap = QPixmap.fromImage(image)
     return pixmap.scaledToWidth(width, Qt.TransformationMode.SmoothTransformation) if width else pixmap
 
-# Import new modules for converter and white matter
 from nct_application.converter_tab import ConverterTab
 if MBCT_EDITION == 'full':
     from utilities_tab import UtilitiesTab
@@ -140,15 +127,9 @@ else:
     UtilitiesTab = None
 from nct_application.nifti_converter import NiftiConverter
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  NETWORK KNOWLEDGE BASE (real literature – no hallucination)
-# ═══════════════════════════════════════════════════════════════════════════════
 
 class NetworkKnowledgeBase:
-    """
-    Provides functional descriptions and top PubMed references for known networks.
-    Sources: Yeo et al. 2011 (J Neurophysiol), Power et al. 2011, etc.
-    """
+    
     _data = {
         'visual': (
             "Processing of visual stimuli, early sensory integration, and object recognition.",
@@ -281,9 +262,7 @@ class NetworkKnowledgeBase:
         return (desc, placeholder)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  STYLESHEET
-# ═══════════════════════════════════════════════════════════════════════════════
+
 
 STYLE = """
 QMainWindow, QWidget         { background:#0d0d1c; color:#dde6f0; font-family:'Segoe UI'; }
@@ -378,9 +357,6 @@ def _lbl(text, obj_name=None):
     return l
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  WORKER THREAD
-# ═══════════════════════════════════════════════════════════════════════════════
 
 class AnalysisWorker(QThread):
     progress = pyqtSignal(int)
@@ -400,7 +376,7 @@ class AnalysisWorker(QThread):
         try:
             self.progress.emit(20)
             
-            # Run analysis
+            
             results = self.app_obj.analyze_gray_matter(
                 input_file=self.input_file,
                 selected_atlas=self.selected_atlas,
@@ -415,9 +391,7 @@ class AnalysisWorker(QThread):
             self.error.emit(f"{e}\n{traceback.format_exc()}")
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  ANALYSIS TAB
-# ═══════════════════════════════════════════════════════════════════════════════
+
 
 class AnalysisTab(QWidget):
     analysis_done = pyqtSignal(dict, str)
@@ -440,7 +414,7 @@ class AnalysisTab(QWidget):
         self.file_label.setObjectName("err")
         self.file_label.setFont(QFont('Consolas', 9))
         row.addWidget(self.file_label, 1)
-        btn = QPushButton("📂  Browse…")
+        btn = QPushButton("Browse…")
         btn.setMaximumWidth(150)
         btn.clicked.connect(self._select_file)
         row.addWidget(btn)
@@ -454,7 +428,7 @@ class AnalysisTab(QWidget):
 
         root.addWidget(_section("Atlas Selection"))
         
-        # Space selection (the three NCT-supported spaces)
+        
         space_row = QHBoxLayout()
         space_row.addWidget(QLabel("Space:"))
         self.space_combo = QComboBox()
@@ -465,7 +439,7 @@ class AnalysisTab(QWidget):
         space_row.addStretch()
         root.addLayout(space_row)
         
-        # Author selection
+        
         author_row = QHBoxLayout()
         author_row.addWidget(QLabel("Author:"))
         self.author_combo = QComboBox()
@@ -476,7 +450,7 @@ class AnalysisTab(QWidget):
         author_row.addStretch()
         root.addLayout(author_row)
         
-        # Abbreviation selection
+        
         abbr_row = QHBoxLayout()
         abbr_row.addWidget(QLabel("Atlas:"))
         self.abbr_combo = QComboBox()
@@ -487,8 +461,8 @@ class AnalysisTab(QWidget):
         abbr_row.addStretch()
         root.addLayout(abbr_row)
         
-        # Atlas information and description label
-        self.atlas_info_label = QLabel("ℹ️  Atlas info will appear here")
+        
+        self.atlas_info_label = QLabel("Atlas info will appear here")
         self.atlas_info_label.setFont(QFont('Consolas', 9))
         self.atlas_info_label.setObjectName("info")
         self.atlas_info_label.setWordWrap(True)
@@ -496,23 +470,21 @@ class AnalysisTab(QWidget):
         
         root.addWidget(_hr())
         
-        # ═══════════════════════════════════════════════════════════════════
-        #  DATA CONFIGURATION (CBIG toolbox data_info parameters)
-        # ═══════════════════════════════════════════════════════════════════
+        
         root.addWidget(_section("Data Configuration"))
 
         cfg_grid = QGridLayout()
         cfg_grid.setHorizontalSpacing(10)
         cfg_grid.setVerticalSpacing(8)
 
-        # Data_Name
+        
         cfg_grid.addWidget(QLabel("Data Name:"), 0, 0)
         self.data_name_edit = QLineEdit()
         self.data_name_edit.setPlaceholderText("— auto from filename —")
         self.data_name_edit.setMinimumHeight(28)
         cfg_grid.addWidget(self.data_name_edit, 0, 1, 1, 3)
 
-        # Data_Type
+        
         cfg_grid.addWidget(QLabel("Data Type:"), 1, 0)
         self.data_type_combo = QComboBox()
         self.data_type_combo.setMinimumHeight(28)
@@ -520,14 +492,14 @@ class AnalysisTab(QWidget):
         self.data_type_combo.currentTextChanged.connect(self._on_data_type_changed)
         cfg_grid.addWidget(self.data_type_combo, 1, 1)
 
-        # Data_Category (optional)
+        
         cfg_grid.addWidget(QLabel("Category:"), 1, 2)
         self.data_category_edit = QLineEdit()
         self.data_category_edit.setPlaceholderText("optional")
         self.data_category_edit.setMinimumHeight(28)
         cfg_grid.addWidget(self.data_category_edit, 1, 3)
 
-        # Data_Threshold (min, max) - only for Metric / Soft
+        
         self.threshold_label = QLabel("Threshold [min, max]:")
         cfg_grid.addWidget(self.threshold_label, 2, 0)
         thr_row = QHBoxLayout()
@@ -547,7 +519,7 @@ class AnalysisTab(QWidget):
         thr_widget = QWidget(); thr_widget.setLayout(thr_row)
         cfg_grid.addWidget(thr_widget, 2, 1, 1, 2)
 
-        # Data_NetworkAssignment (optional file)
+        
         cfg_grid.addWidget(QLabel("Network Assign:"), 3, 0)
         na_row = QHBoxLayout()
         self.network_assign_edit = QLineEdit()
@@ -563,9 +535,9 @@ class AnalysisTab(QWidget):
 
         root.addLayout(cfg_grid)
 
-        # Helper note about Data_Type
+        
         self.data_type_note = QLabel(
-            "ℹ️  Metric: continuous map (contrast/probability). "
+            "Metric: continuous map (contrast/probability). "
             "Hard: 1 ROI→1 network (no threshold). "
             "Soft: probabilistic membership."
         )
@@ -600,7 +572,7 @@ class AnalysisTab(QWidget):
         root.addLayout(par)
         root.addWidget(_hr())
 
-        # Progress bar with an elapsed-time / ETA readout beside it
+        
         prog_row = QHBoxLayout()
         self.progress_bar = QProgressBar()
         self.progress_bar.setValue(0)
@@ -616,16 +588,16 @@ class AnalysisTab(QWidget):
         self.status_lbl.setObjectName("ok")
         root.addWidget(self.status_lbl)
 
-        # Timer infrastructure for elapsed time + ETA
+        
         from PyQt6.QtCore import QTimer, QElapsedTimer
         self._elapsed = QElapsedTimer()
         self._tick = QTimer(self)
-        self._tick.setInterval(500)  # update twice a second
+        self._tick.setInterval(500)  
         self._tick.timeout.connect(self._update_timer_label)
 
         root.addStretch()
 
-        self.btn_analyze = QPushButton("🧠  Run Analysis")
+        self.btn_analyze = QPushButton("Run Analysis")
         self.btn_analyze.setObjectName("analyze_btn")
         self.btn_analyze.clicked.connect(self._run)
         root.addWidget(self.btn_analyze)
@@ -634,7 +606,7 @@ class AnalysisTab(QWidget):
         """Enable/disable threshold controls based on Data_Type.
         Hard parcellations don't use a threshold; Metric/Soft do."""
         is_hard = (data_type == 'Hard')
-        # Threshold not applicable for Hard parcellations
+        
         self.threshold_label.setEnabled(not is_hard)
         self.thr_min_spin.setEnabled(not is_hard)
         self.thr_max_edit.setEnabled(not is_hard)
@@ -654,13 +626,13 @@ class AnalysisTab(QWidget):
     def _gather_data_config(self):
         """Collect CBIG data_info configuration from the UI controls."""
         cfg = {}
-        # Data_Name
+        
         name = self.data_name_edit.text().strip()
         if name:
             cfg['Data_Name'] = name
-        # Data_Type
+        
         cfg['Data_Type'] = self.data_type_combo.currentText()
-        # Data_Threshold (only Metric / Soft)
+        
         if cfg['Data_Type'] in ('Metric', 'Soft'):
             lo = self.thr_min_spin.value()
             hi_text = self.thr_max_edit.text().strip()
@@ -672,10 +644,7 @@ class AnalysisTab(QWidget):
                 except ValueError:
                     hi = 'Inf'
 
-            # Format numbers to match CBIG documented spec exactly:
-            #   - integer-valued numbers written without a decimal (5 not 5.0)
-            #   - 'Inf' kept literal
-            #   - single space after the comma:  [5, Inf]
+            
             def _fmt(v):
                 if isinstance(v, str):
                     return v
@@ -684,7 +653,7 @@ class AnalysisTab(QWidget):
             lo_str = _fmt(lo)
             hi_str = _fmt(hi)
             cfg['Data_Threshold'] = f"[{lo_str}, {hi_str}]"
-        # Optional fields
+        
         na = self.network_assign_edit.text().strip()
         if na:
             cfg['Data_NetworkAssignment'] = na
@@ -705,7 +674,7 @@ class AnalysisTab(QWidget):
         self.file_label.setText(Path(path).name)
         self.file_label.setObjectName("ok")
         
-        # Auto-fill Data_Name from filename (stem, without .nii/.gz)
+        
         stem = Path(path).name.replace('.nii.gz', '').replace('.nii', '')
         if hasattr(self, 'data_name_edit') and not self.data_name_edit.text().strip():
             self.data_name_edit.setText(stem)
@@ -715,27 +684,27 @@ class AnalysisTab(QWidget):
             from nct_application.cbig_config import CBIGConfig
             from nct_application.cbig_atlas_loader import CBIGAtlasLoader
             
-            # Detect space from file
+            
             detected_space = BrainSpaceDetector.detect_space(path)
             if detected_space:
-                self.space_label.setText(f"✅ File space: {detected_space}")
+                self.space_label.setText(f"File space: {detected_space}")
             else:
-                self.space_label.setText("⚠️  Could not detect file space")
+                self.space_label.setText(" Could not detect file space")
             
-            # Initialize atlas loader
+            
             atlas_dir = CBIGConfig.get_atlas_dir()
             if not atlas_dir or not Path(atlas_dir).exists():
-                self.space_label.setText("⚠️  Atlas directory not configured")
+                self.space_label.setText("Atlas directory not configured")
                 return
             
             self.atlas_loader = CBIGAtlasLoader(atlas_dir)
             
-            # Populate space combo with the three NCT-supported spaces
+            
             self.space_combo.blockSignals(True)
             self.space_combo.clear()
             self.space_combo.addItems(["FSLMNI2mm", "fs_LR_32k", "fsaverage6"])
             
-            # Pre-select based on detected space if available
+            
             if detected_space == "FSLMNI2mm":
                 self.space_combo.setCurrentIndex(0)
             elif detected_space == "fs_LR_32k":
@@ -743,21 +712,21 @@ class AnalysisTab(QWidget):
             elif detected_space == "fsaverage6":
                 self.space_combo.setCurrentIndex(2)
             else:
-                self.space_combo.setCurrentIndex(0)  # Default to FSLMNI2mm
+                self.space_combo.setCurrentIndex(0)  
             
             self.space_combo.blockSignals(False)
             
-            # Trigger space changed to populate authors
+            
             self._on_space_changed()
             
-            print(f"✅ File loaded: {Path(path).name}")
-            print(f"✅ Atlas loader initialized")
+            print(f"File loaded: {Path(path).name}")
+            print(f"Atlas loader initialized")
             
         except Exception as e:
-            print(f"❌ Error loading file: {e}")
+            print(f" Error loading file: {e}")
             import traceback
             traceback.print_exc()
-            self.space_label.setText(f"⚠️  Error: {str(e)[:50]}")
+            self.space_label.setText(f"Error: {str(e)[:50]}")
     
     def _on_space_changed(self):
         """Populate author combo when space changes"""
@@ -769,22 +738,22 @@ class AnalysisTab(QWidget):
                 self.abbr_combo.clear()
                 return
             
-            # Get all unique authors
+            
             authors = sorted(get_authors())
             
-            # Populate author combo
+            
             self.author_combo.blockSignals(True)
             self.author_combo.clear()
             self.author_combo.addItems(authors)
             self.author_combo.blockSignals(False)
             
-            # Trigger author changed to populate abbreviations
+            
             self._on_author_changed()
             
-            print(f"✅ Space changed: {self.space_combo.currentText()} ({len(authors)} authors)")
+            print(f"Space changed: {self.space_combo.currentText()} ({len(authors)} authors)")
             
         except Exception as e:
-            print(f"❌ Error in _on_space_changed: {e}")
+            print(f"Error in _on_space_changed: {e}")
             import traceback
             traceback.print_exc()
     
@@ -803,10 +772,10 @@ class AnalysisTab(QWidget):
                 self.abbr_combo.clear()
                 return
             
-            # Get all abbreviations for this author
+            
             abbreviations = sorted(get_abbreviations_by_author(selected_author))
             
-            # Populate abbreviation combo
+            
             self.abbr_combo.blockSignals(True)
             self.abbr_combo.clear()
             
@@ -816,10 +785,10 @@ class AnalysisTab(QWidget):
             self.abbr_combo.blockSignals(False)
             self.abbr_combo.setCurrentIndex(0)
             
-            print(f"✅ Author selected: {selected_author} ({len(abbreviations)} abbreviations)")
+            print(f"Author selected: {selected_author} ({len(abbreviations)} abbreviations)")
             
         except Exception as e:
-            print(f"❌ Error in _on_author_changed: {e}")
+            print(f"Error in _on_author_changed: {e}")
             import traceback
             traceback.print_exc()
     
@@ -829,28 +798,28 @@ class AnalysisTab(QWidget):
             from nct_application.atlas_metadata import get_atlas_info
             
             if self.abbr_combo.currentIndex() < 0:
-                self.atlas_info_label.setText("ℹ️  Select an atlas to see information")
+                self.atlas_info_label.setText("Select an atlas to see information")
                 return
             
             selected_abbr = self.abbr_combo.currentData()
             if not selected_abbr:
                 return
             
-            # Get metadata for this abbreviation
+            
             metadata = get_atlas_info(selected_abbr)
             
             if metadata:
-                info_lines = [f"✅ {selected_abbr}"]
+                info_lines = [f"{selected_abbr}"]
                 
-                # Add description
+                
                 if 'description' in metadata:
                     info_lines.append(f"   {metadata['description']}")
                 
-                # Add source
+                
                 if 'source' in metadata:
                     info_lines.append(f"   Source: {metadata['source']}")
                 
-                # Add number of regions
+                
                 if 'num_regions' in metadata:
                     regions = metadata['num_regions']
                     if 'num_components' in metadata:
@@ -862,12 +831,12 @@ class AnalysisTab(QWidget):
                 self.atlas_info_label.setText(info_text)
                 self.atlas_info_label.setObjectName("ok")
             else:
-                self.atlas_info_label.setText(f"⚠️  No metadata for {selected_abbr}")
+                self.atlas_info_label.setText(f"No metadata for {selected_abbr}")
                 self.atlas_info_label.setObjectName("err")
         
         except Exception as e:
-            self.atlas_info_label.setText(f"⚠️  Error: {str(e)[:60]}")
-            print(f"❌ Error in _on_abbr_selected: {e}")
+            self.atlas_info_label.setText(f"Error: {str(e)[:60]}")
+            print(f"Error in _on_abbr_selected: {e}")
     
     def _fmt_mmss(self, ms):
         """Format milliseconds as MM:SS."""
@@ -915,7 +884,7 @@ class AnalysisTab(QWidget):
             QMessageBox.warning(self, "No Atlas", "Please select an atlas abbreviation.")
             return
         
-        # Detect space
+        
         from nct_application.cbig_analysis import BrainSpaceDetector
         space = BrainSpaceDetector.detect_space(self.data_file)
         
@@ -923,7 +892,7 @@ class AnalysisTab(QWidget):
             QMessageBox.critical(self, "Error", "Could not detect brain space from file dimensions.")
             return
         
-        # Get selected abbreviation
+        
         selected_abbr = self.abbr_combo.currentData()
         selected_space = self.space_combo.currentText()
         selected_author = self.author_combo.currentText()
@@ -932,21 +901,20 @@ class AnalysisTab(QWidget):
             QMessageBox.warning(self, "Error", "Invalid atlas selection.")
             return
         
-        # Verify space match (normalize to avoid false mismatches from stray
-        # whitespace or case differences — both should be e.g. 'FSLMNI2mm').
+        
         def _norm(s):
             return (s or '').strip().lower()
         if _norm(space) != _norm(selected_space):
-            print(f"⚠️ Space mismatch: detected={space!r}  selected={selected_space!r}")
+            print(f"Space mismatch: detected={space!r}  selected={selected_space!r}")
             QMessageBox.warning(
                 self,
-                "⚠️  Space Mismatch",
+                "Space Mismatch",
                 f"File is in {space} but selected atlas is for {selected_space}.\n\n"
                 f"Please convert the file to {selected_space} using the Converter tab.",
             )
             return
         
-        # Prepare for analysis
+        
         self._start_timer()
         self._set_progress(10)
         self.status_lbl.setText(f"Analyzing {selected_author} - {selected_abbr}…")
@@ -956,27 +924,25 @@ class AnalysisTab(QWidget):
             from nct_application.application import NCTApplication
             from nct_application.config import NCTConfig
             
-            # Get config
+            
             config = NCTConfig()
             
-            # Create application with input file
+            
             app_obj = NCTApplication(config, analysis_mode="gray_matter", input_file=self.data_file)
             
-            # Gather user data configuration (Data_Type, Data_Threshold, etc.)
-            data_config = self._gather_data_config()
-            print(f"📋 Data config from UI: {data_config}")
             
-            # Inject config directly onto the CBIG analyzer object.
-            # This works regardless of which application.py version is loaded,
-            # because cbig_analysis.analyze() reads this attribute as a fallback.
+            data_config = self._gather_data_config()
+            print(f"Data config from UI: {data_config}")
+            
+            
             try:
                 if getattr(app_obj, 'cbig', None) is not None:
                     app_obj.cbig._ui_data_config = data_config
-                    print("📌 Injected data_config onto app_obj.cbig")
+                    print("Injected data_config onto app_obj.cbig")
             except Exception as _inj_err:
-                print(f"⚠️  Could not inject data_config: {_inj_err}")
+                print(f"Could not inject data_config: {_inj_err}")
             
-            # Call analyze_gray_matter, adapting to whichever signature exists.
+            
             import inspect
             try:
                 _params = inspect.signature(app_obj.analyze_gray_matter).parameters
@@ -984,7 +950,7 @@ class AnalysisTab(QWidget):
             except (ValueError, TypeError):
                 _supports_cfg = False
             
-            # Run gray matter analysis for this abbreviation
+            
             self._set_progress(50)
             if _supports_cfg:
                 results = app_obj.analyze_gray_matter(
@@ -992,8 +958,8 @@ class AnalysisTab(QWidget):
                     data_config=data_config
                 )
             else:
-                # Older application.py — config still applied via the injected attribute
-                print("ℹ️  application.py is the older version; using injected config fallback")
+                
+                print("application.py is the older version; using injected config fallback")
                 results = app_obj.analyze_gray_matter(selected_atlas=selected_abbr)
             
             self._set_progress(100)
@@ -1010,8 +976,8 @@ class AnalysisTab(QWidget):
             self.progress_bar.setValue(0)
             self._stop_timer(final=False)
             self.timer_lbl.setText("⏱ --:--")
-            self.status_lbl.setText("❌  Analysis failed")
-            print(f"❌ Analysis error: {e}")
+            self.status_lbl.setText("Analysis failed")
+            print(f"Analysis error: {e}")
             import traceback
             traceback.print_exc()
             QMessageBox.critical(self, "Analysis Error", str(e))
@@ -1020,10 +986,10 @@ class AnalysisTab(QWidget):
         self.progress_bar.setValue(100)
         self.btn_analyze.setEnabled(True)
         
-        # Handle both 'networks' (gray matter) and 'tracts' (white matter) keys
+        
         nets = results.get('networks', []) or results.get('tracts', [])
         
-        # Also try extracting from nested structure if needed
+        
         if not nets and 'results' in results and isinstance(results['results'], dict):
             nested_results = results['results']
             if nested_results:
@@ -1032,31 +998,27 @@ class AnalysisTab(QWidget):
                 nets = atlas_result.get('networks', []) or atlas_result.get('tracts', [])
         
         if not nets:
-            self.status_lbl.setText("⚠️  No networks returned")
+            self.status_lbl.setText("No networks returned")
             QMessageBox.warning(self, "No Results",
                 results.get('message', 'Analysis returned 0 networks.'))
             return
         
-        # Ensure standard keys exist for display
+        
         if 'networks' not in results and 'tracts' in results:
             results['networks'] = results['tracts']
         
         results['brain_space'] = results.get('brain_space', space)
-        self.status_lbl.setText(f"✅  Done — {len(nets)} networks")
+        self.status_lbl.setText(f" Done — {len(nets)} networks")
         self.analysis_done.emit(results, results['brain_space'])
         self.parent_main.tabs.setCurrentIndex(1)
 
     def _on_error(self, msg):
         self.progress_bar.setValue(0)
         self.btn_analyze.setEnabled(True)
-        self.status_lbl.setText("❌  Analysis failed")
+        self.status_lbl.setText("Analysis failed")
         QMessageBox.critical(self, "Analysis Error", msg)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  RESULTS TAB — side‑by‑side brain map + bar graph + literature panel
-#  (FULLY INTERACTIVE: axial/coronal/sagittal, zoom, colormap, slice slider)
-# ═══════════════════════════════════════════════════════════════════════════════
 
 class ResultsTab(QWidget):
     """Results tab with full interactive brain viewer (axial/coronal/sagittal, zoom, colormap, template switching)."""
@@ -1067,39 +1029,38 @@ class ResultsTab(QWidget):
         self.current_atlas_code = None
         self.current_brain_space = None
         
-        # Brain viewer state
-        self.template_paths = {}          # display name -> full path
+        
+        self.template_paths = {}         
         self.current_template_path = None
-        self.template_data = None          # 3D numpy array
+        self.template_data = None          
         self.template_affine = None
-        self._atlas_vol = None             # atlas label/prob volume (analysis space)
-        self._atlas_aff = None             # atlas affine (voxel -> MNI)
+        self._atlas_vol = None             
+        self._atlas_aff = None             
         self._atlas_is_4d = False
-        self._atlas_mode = None            # 'labels' | 'metric' | '4d'
-        self._label_map = None             # {atlas_label_value: network_row_index}
-        self.current_view = 'axial'        # 'axial', 'coronal', 'sagittal'
+        self._atlas_mode = None           
+        self._label_map = None             
+        self.current_view = 'axial'        
         self.current_slice_idx = 0
         self.max_slice = 0
-        # Per-plane slice indices for the triplanar (linked-navigation) view.
-        # axial -> Z, coronal -> Y, sagittal -> X.
-        self.slice_ax = 0   # axial slice (Z index)
-        self.slice_co = 0   # coronal slice (Y index)
-        self.slice_sa = 0   # sagittal slice (X index)
+        
+        self.slice_ax = 0   
+        self.slice_co = 0   
+        self.slice_sa = 0   
         self.zoom = 1.0
         self.colormap = 'gray'
         
-        # Network overlay data
+        
         self.network_names = []
         self.network_overlaps = []
         self.network_pvalues = []
-        self.network_centroids = []        # list of (x_mni, y_mni, z_mni) for each network
+        self.network_centroids = []        
         
-        # Interactive features
-        self.crosshair_mni = None          # MNI coordinates for crosshair
-        self.current_highlighted_idx = None  # Currently highlighted network
+       
+        self.crosshair_mni = None          
+        self.current_highlighted_idx = None  
         
-        # View mode selection
-        self.view_mode = 'single'  # 'single' or 'triplanar'
+        
+        self.view_mode = 'single'  
         self.brain_fig_axial = None
         self.brain_fig_coronal = None
         self.brain_fig_sagittal = None
@@ -1111,15 +1072,13 @@ class ResultsTab(QWidget):
         self._build()
         self._scan_templates()
 
-    # ----------------------------------------------------------------------
-    # UI Construction
-    # ----------------------------------------------------------------------
+    
     def _build(self):
         root = QVBoxLayout(self)
         root.setContentsMargins(14, 12, 14, 12)
         root.setSpacing(8)
 
-        # ----- Top: results table -----
+        
         top_w = QWidget()
         top_v = QVBoxLayout(top_w)
         top_v.setContentsMargins(0, 0, 0, 4)
@@ -1149,42 +1108,42 @@ class ResultsTab(QWidget):
         self.table.clicked.connect(self._on_row_click)
         top_v.addWidget(self.table)
 
-        # ----- Bottom: brain viewer + bar graph + literature panel -----
+       
         bottom_w = QWidget()
         bottom_layout = QVBoxLayout(bottom_w)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
         bottom_layout.setSpacing(6)
 
-        # Export row
+       
         export_row = QHBoxLayout()
         lbl_b = QLabel("Export:")
         lbl_b.setFont(QFont('Segoe UI', 10, QFont.Weight.Bold))
         lbl_b.setStyleSheet("color:#38b6ff;")
         export_row.addWidget(lbl_b)
         export_row.addStretch()
-        for label, fmt in [("📊 CSV", "csv"), ("🧪 NIfTI", "nii"),
-                           ("🖼 PNG", "png"), ("🖼 TIF", "tif"), ("🖼 JPEG", "jpg")]:
+        for label, fmt in [("CSV", "csv"), ("NIfTI", "nii"),
+                           ("PNG", "png"), ("TIF", "tif"), ("JPEG", "jpg")]:
             btn = QPushButton(label)
             btn.setObjectName("export_btn")
             btn.setMaximumWidth(88)
             btn.setMinimumHeight(28)
             btn.clicked.connect(lambda checked, f=fmt: self._export(f))
             export_row.addWidget(btn)
-        # Feature 3: one NIfTI per significant network
-        btn_sig = QPushButton("🧠 Sig. NIfTIs")
+        
+        btn_sig = QPushButton("Sig. NIfTIs")
         btn_sig.setObjectName("export_btn")
         btn_sig.setMinimumHeight(28)
         btn_sig.setToolTip("Save one NIfTI mask per significant network (p < 0.05)")
         btn_sig.clicked.connect(self._export_significant_niftis)
         export_row.addWidget(btn_sig)
-        # Feature 4: save / load a reviewable session
+        
         btn_save = QPushButton("💾 Save Results")
         btn_save.setObjectName("export_btn")
         btn_save.setMinimumHeight(28)
         btn_save.setToolTip("Save results so you can reload them later without recomputing")
         btn_save.clicked.connect(self._save_session)
         export_row.addWidget(btn_save)
-        btn_load = QPushButton("📂 Load Results")
+        btn_load = QPushButton("Load Results")
         btn_load.setObjectName("export_btn")
         btn_load.setMinimumHeight(28)
         btn_load.setToolTip("Reload previously saved results for review")
@@ -1192,19 +1151,19 @@ class ResultsTab(QWidget):
         export_row.addWidget(btn_load)
         bottom_layout.addLayout(export_row)
 
-        # Side-by-side canvases (left: brain, right: bar)
+        
         canvas_container = QWidget()
         canvas_layout = QHBoxLayout(canvas_container)
         canvas_layout.setContentsMargins(0, 0, 0, 0)
         canvas_layout.setSpacing(12)
 
-        # ---------- LEFT PANEL: Brain viewer with full controls ----------
+        
         left_wrap = QWidget()
         left_layout = QVBoxLayout(left_wrap)
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(4)
 
-        # 1) View mode selection (Single vs Triplanar)
+        
         viewmode_row = QHBoxLayout()
         viewmode_row.setSpacing(6)
         viewmode_label = QLabel("📺 Display Mode:")
@@ -1224,7 +1183,7 @@ class ResultsTab(QWidget):
         viewmode_row.addStretch()
         left_layout.addLayout(viewmode_row)
         
-        # 2) Underlay selection
+        
         underlay_row = QHBoxLayout()
         underlay_row.setSpacing(6)
         underlay_label = QLabel("🗺️  Brain Underlay:")
@@ -1238,7 +1197,7 @@ class ResultsTab(QWidget):
         underlay_row.addStretch()
         left_layout.addLayout(underlay_row)
 
-        # 2) View buttons (Axial, Coronal, Sagittal) - hidden in triplanar mode
+        
         view_row = QHBoxLayout()
         view_row.setSpacing(5)
         self.view_row_container = QWidget()
@@ -1259,7 +1218,7 @@ class ResultsTab(QWidget):
         
         left_layout.addWidget(self.view_row_container)
         
-        # 3) Slice slider + label
+        
         slice_row = QHBoxLayout()
         slice_row.addWidget(QLabel("Slice:"))
         self.slice_slider = QSlider(Qt.Orientation.Horizontal)
@@ -1271,7 +1230,7 @@ class ResultsTab(QWidget):
         slice_row.addWidget(self.slice_label)
         left_layout.addLayout(slice_row)
 
-        # 4) Zoom slider
+        
         zoom_row = QHBoxLayout()
         zoom_row.addWidget(QLabel("Zoom:"))
         self.zoom_slider = QSlider(Qt.Orientation.Horizontal)
@@ -1284,7 +1243,7 @@ class ResultsTab(QWidget):
         zoom_row.addWidget(self.zoom_label)
         left_layout.addLayout(zoom_row)
 
-        # 5) Colormap selection
+       
         cmap_row = QHBoxLayout()
         cmap_row.addWidget(QLabel("Colormap:"))
         self.cmap_combo = QComboBox()
@@ -1293,21 +1252,19 @@ class ResultsTab(QWidget):
         cmap_row.addWidget(self.cmap_combo, 1)
         left_layout.addLayout(cmap_row)
 
-        # Brain visualization container (will hold single or triplanar layout)
+        
         self.brain_container = QWidget()
         self.brain_container_layout = QVBoxLayout(self.brain_container)
         self.brain_container_layout.setContentsMargins(0, 0, 0, 0)
         self.brain_container_layout.setSpacing(0)
         
-        # Single panel mode: one interactive matplotlib canvas (click + drag
-        # the crosshair directly on the brain). Falls back to a static QLabel
-        # if the interactive canvas can't be created on this system.
+        
         self.brain_fig = plt.Figure(figsize=(8, 6), facecolor='#0a0a14')
         self.brain_canvas = self._make_canvas(self.brain_fig, view_id='')
         self.brain_canvas.setStyleSheet("background-color: #0a0a14; border: 1px solid #2a3a5a; border-radius: 4px;")
         self.brain_container_layout.addWidget(self.brain_canvas, 1)
         
-        # Crosshair readout (Results #3): network name + anatomical location + BA
+        
         self.crosshair_readout = QLabel("⊕ Click or drag on the brain to inspect a location")
         self.crosshair_readout.setFont(QFont('Segoe UI', 9))
         self.crosshair_readout.setWordWrap(True)
@@ -1315,16 +1272,16 @@ class ResultsTab(QWidget):
             "background:#0c1424; border:1px solid #1d3358; border-radius:4px;  "
             "padding:6px 8px; color:#cde4ff;")
 
-        # Info box: now the per-network subregion breakdown
+        
         self.info_text = QTextEdit()
         self.info_text.setReadOnly(True)
         self.info_text.setFont(QFont('Consolas', 9))
         self.info_text.setPlaceholderText("Cortical subregions of the selected network will appear here")
         self.info_text.setStyleSheet("background:#0c0c1a; border:1px solid #2a2a44; border-radius:4px; padding:4px;")
 
-        # Create splitter for brain container and info text
+        
         self.left_splitter = QSplitter(Qt.Orientation.Vertical)
-        # Top part: brain container + crosshair readout
+        
         top_splitter_widget = QWidget()
         top_splitter_layout = QVBoxLayout(top_splitter_widget)
         top_splitter_layout.setContentsMargins(0, 0, 0, 0)
@@ -1333,15 +1290,15 @@ class ResultsTab(QWidget):
         top_splitter_layout.addWidget(self.crosshair_readout)
         self.left_splitter.addWidget(top_splitter_widget)
         self.left_splitter.addWidget(self.info_text)
-        # Set initial sizes: brain gets more space, info panel gets less
+        
         self.left_splitter.setSizes([500, 150])
-        self.left_splitter.setStretchFactor(0, 1)  # Brain can expand
-        self.left_splitter.setStretchFactor(1, 0)  # Info panel stays compact
+        self.left_splitter.setStretchFactor(0, 1)  
+        self.left_splitter.setStretchFactor(1, 0)  
         left_layout.addWidget(self.left_splitter, 1)
 
         canvas_layout.addWidget(left_wrap, stretch=5)
 
-        # ---------- RIGHT PANEL: Bar graph ----------
+        
         right_wrap = QWidget()
         right_layout = QVBoxLayout(right_wrap)
         right_layout.setContentsMargins(0, 0, 0, 0)
@@ -1353,8 +1310,6 @@ class ResultsTab(QWidget):
 
         bottom_layout.addWidget(canvas_container)
 
-        # ----- Top-right: tabbed annotation panel -----
-        #   Tab 1: Functional (Neurosynth)   Tab 2: Neurotransmitters (PET)
         decode_w = QWidget()
         decode_v = QVBoxLayout(decode_w)
         decode_v.setContentsMargins(0, 0, 0, 4)
@@ -1368,7 +1323,7 @@ class ResultsTab(QWidget):
             "QTabBar::tab:selected{background:#0c0c1a; color:#38b6ff;}"
             "QTabWidget::pane{border:1px solid #2a2a44; top:-1px;}")
 
-        # --- Tab 1: Functional Decoding ---
+        
         fwrap = QWidget(); fv = QVBoxLayout(fwrap)
         fv.setContentsMargins(6, 6, 6, 6); fv.setSpacing(6)
         fhdr = QHBoxLayout()
@@ -1389,7 +1344,7 @@ class ResultsTab(QWidget):
         fv.addWidget(self.decoding_view, 1)
         self.annot_tabs.addTab(fwrap, "Functional (Neurosynth)")
 
-        # --- Tab 2: Neurotransmitter Mapping ---
+        
         nwrap = QWidget(); nv = QVBoxLayout(nwrap)
         nv.setContentsMargins(6, 6, 6, 6); nv.setSpacing(6)
         nhdr = QHBoxLayout()
@@ -1410,7 +1365,7 @@ class ResultsTab(QWidget):
         nv.addWidget(self.neuro_view, 1)
         self.annot_tabs.addTab(nwrap, "Neurotransmitters (PET)")
 
-        # --- Tab 3: Transcriptomics (receptor genes, AHBA) ---
+        
         twrap = QWidget(); tv = QVBoxLayout(twrap)
         tv.setContentsMargins(6, 6, 6, 6); tv.setSpacing(6)
         thdr = QHBoxLayout()
@@ -1436,9 +1391,6 @@ class ResultsTab(QWidget):
         self._render_neuro_empty()
         self._render_trans_empty()
 
-        # ----- Assemble the 2x2 grid via nested resizable splitters -----
-        #   row 1:  Network Results (table)  |  Annotations (Functional / PET)
-        #   row 2:  Brain Map                |  Network Overlap Coefficient
         row1 = QSplitter(Qt.Orientation.Horizontal)
         row1.addWidget(top_w)
         row1.addWidget(decode_w)
@@ -1455,9 +1407,7 @@ class ResultsTab(QWidget):
         self._load_neurotransmitter_data()
         self._load_transcriptomics_data()
 
-    # ----------------------------------------------------------------------
-    # Template scanning & loading
-    # ----------------------------------------------------------------------
+    
     def _scan_templates(self):
         """Find all .nii templates in known directories and populate underlay_combo."""
         from pathlib import Path
@@ -1468,7 +1418,7 @@ class ResultsTab(QWidget):
             Path(__file__).parent / 'mni_templates',
             Path(__file__).parent.parent / 'mni_templates',
         ]
-        # Also try the directory used by BrainViewerTab if available (via parent_main)
+        
         if hasattr(self, 'parent_main') and hasattr(self.parent_main, 'brain_viewer_tab'):
             if hasattr(self.parent_main.brain_viewer_tab, 'viewer_factory'):
                 if self.parent_main.brain_viewer_tab.viewer_factory and self.parent_main.brain_viewer_tab.viewer_factory.template_dir:
@@ -1486,18 +1436,18 @@ class ResultsTab(QWidget):
                     break
 
         if not found:
-            # Fallback: use any NIfTI from current directory
+            
             for f in Path('.').glob('*.nii'):
                 self.template_paths[f.name] = str(f)
 
-        # Populate combo box
+        
         self.underlay_combo.blockSignals(True)
         self.underlay_combo.clear()
         for name in sorted(self.template_paths.keys()):
             self.underlay_combo.addItem(name, name)
         self.underlay_combo.blockSignals(False)
 
-        # Set default: prefer mni_icbm152_t1_tal_nlin_asym_09c.nii
+        
         default_name = None
         for name in self.template_paths.keys():
             if 'mni_icbm152' in name.lower() or 'icbm152' in name.lower():
@@ -1516,7 +1466,7 @@ class ResultsTab(QWidget):
         import nibabel as nib
         path = self.template_paths.get(template_display_name)
         if not path or not Path(path).exists():
-            print(f"⚠️ Template not found: {template_display_name}")
+            print(f"Template not found: {template_display_name}")
             return False
         try:
             img = nib.load(path)
@@ -1524,16 +1474,16 @@ class ResultsTab(QWidget):
             self.template_affine = img.affine
             self.current_template_path = path
 
-            # Normalize to 0-1 range for display
+            
             vmin, vmax = np.percentile(self.template_data, (1, 99))
             self.template_data = np.clip(self.template_data, vmin, vmax)
             self.template_data = (self.template_data - vmin) / (vmax - vmin)
 
-            # Update slice range for current view
+            
             self._update_slice_range()
             return True
         except Exception as e:
-            print(f"❌ Failed to load template {path}: {e}")
+            print(f"Failed to load template {path}: {e}")
             return False
 
     def _update_slice_range(self):
@@ -1551,9 +1501,9 @@ class ResultsTab(QWidget):
         self.slice_slider.blockSignals(True)
         self.slice_slider.setRange(0, max_idx)
         self.slice_slider.blockSignals(False)
-        # Set to middle slice
+        
         self.current_slice_idx = max_idx // 2
-        # Initialize per-plane slices to the volume centre (for triplanar)
+        
         self.slice_sa = shape[0] // 2   # X
         self.slice_co = shape[1] // 2   # Y
         self.slice_ax = shape[2] // 2   # Z
@@ -1563,9 +1513,7 @@ class ResultsTab(QWidget):
     def _update_slice_label(self):
         self.slice_label.setText(f"{self.current_slice_idx} / {self.max_slice}")
 
-    # ----------------------------------------------------------------------
-    # Interactive controls
-    # ----------------------------------------------------------------------
+    
     def _set_view(self, view):
         self.current_view = view
         for v, btn in self.view_btns.items():
@@ -1576,7 +1524,7 @@ class ResultsTab(QWidget):
     def _on_slice_changed(self, value):
         self.current_slice_idx = value
         self._update_slice_label()
-        # Render appropriate view
+        
         if self.view_mode == 'triplanar':
             self._render_triplanar(highlighted_net_idx=self.current_highlighted_idx)
         else:
@@ -1600,14 +1548,12 @@ class ResultsTab(QWidget):
                 step = 1 if delta > 0 else -1
                 new_val = max(0, min(self.current_slice_idx + step, self.max_slice))
                 if new_val != self.current_slice_idx:
-                    # move via the slider so label + signals stay in sync
+                    
                     self.slice_slider.setValue(new_val)
-                return True  # consume the event
+                return True  
         return super().eventFilter(obj, event)
 
-    # ----------------------------------------------------------------------
-    # Voxel statistics panel (feature 2)
-    # ----------------------------------------------------------------------
+    
     def _compute_voxel_stats(self):
         """Compute per-network voxel stats; cache on self._voxel_stats."""
         self._voxel_stats = None
@@ -1621,7 +1567,7 @@ class ResultsTab(QWidget):
             self._voxel_stats = rows
             self._voxel_best_idx = best
         except Exception as e:
-            print(f"⚠️ Voxel stats error: {e}")
+            print(f"Voxel stats error: {e}")
 
     def _update_voxel_panel(self, selected_idx=None):
         """Show voxel counts and the peak (highest-count) location."""
@@ -1668,7 +1614,7 @@ class ResultsTab(QWidget):
     def _on_zoom_changed(self, value):
         self.zoom = value / 100.0
         self.zoom_label.setText(f"{value}%")
-        # Render appropriate view
+        
         if self.view_mode == 'triplanar':
             self._render_triplanar(highlighted_net_idx=self.current_highlighted_idx)
         else:
@@ -1676,7 +1622,7 @@ class ResultsTab(QWidget):
 
     def _on_colormap_changed(self, cmap):
         self.colormap = cmap
-        # Render appropriate view
+        
         if self.view_mode == 'triplanar':
             self._render_triplanar(highlighted_net_idx=self.current_highlighted_idx)
         else:
@@ -1721,7 +1667,7 @@ class ResultsTab(QWidget):
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         if view_id == '':
             lbl.pressed.connect(self._on_brain_press_px)
-            lbl.dragged.connect(self._on_brain_press_px)   # drag = continuous press
+            lbl.dragged.connect(self._on_brain_press_px)   
             lbl.scrolled.connect(lambda step, v: self._scroll_single(step))
         else:
             lbl.pressed.connect(self._on_tri_press_px)
@@ -1729,8 +1675,7 @@ class ResultsTab(QWidget):
             lbl.scrolled.connect(self._on_tri_scroll_px)
         return lbl
 
-    # ── Pixel → data → MNI mapping (QLabel pixmap based, no matplotlib canvas) ──
-    def _label_px_to_data(self, ax, label, x_px, y_px):
+        def _label_px_to_data(self, ax, label, x_px, y_px):
         """Map a mouse position in label pixels to matplotlib data coordinates
         using the stored axes. Accounts for the pixmap being centered in the
         (possibly larger) label."""
@@ -1741,23 +1686,20 @@ class ResultsTab(QWidget):
             return None
         img_w, img_h = pm.width(), pm.height()
         lab_w, lab_h = label.width(), label.height()
-        # pixmap is centered (AlignCenter): compute offset of image within label
         off_x = max(0, (lab_w - img_w) / 2.0)
         off_y = max(0, (lab_h - img_h) / 2.0)
         ix = x_px - off_x
         iy = y_px - off_y
         if ix < 0 or iy < 0 or ix > img_w or iy > img_h:
             return None
-        # The figure was saved at dpi=100. Convert image pixel -> figure pixel.
+        
         fig = ax.figure
         fig_w_px = fig.get_figwidth() * fig.dpi
         fig_h_px = fig.get_figheight() * fig.dpi
-        # image may be scaled vs the figure's native pixel size
         sx = fig_w_px / img_w
         sy = fig_h_px / img_h
         fx = ix * sx
         fy = iy * sy
-        # matplotlib display origin is bottom-left; Qt is top-left -> flip y
         disp_y = fig_h_px - fy
         try:
             inv = ax.transData.inverted()
@@ -1778,21 +1720,21 @@ class ResultsTab(QWidget):
         else:
             raw = self.template_data[sidx, :, :]
         nrows_raw, ncols_raw = raw.shape
-        # displayed (dc=xdata, dr=ydata) -> raw (a_row, a_col); verified inverse:
+        
         a_row = float(xdata)
         a_col = float(ydata)
         a_row = float(np.clip(a_row, 0, nrows_raw - 1))
         a_col = float(np.clip(a_col, 0, ncols_raw - 1))
-        if view == 'axial':       # raw dims = (X, Y); slice = Z
+        if view == 'axial':       
             x_vox, y_vox, z_vox = a_row, a_col, sidx
-        elif view == 'coronal':   # raw dims = (X, Z); slice = Y
+        elif view == 'coronal':   
             x_vox, z_vox, y_vox = a_row, a_col, sidx
-        else:                     # sagittal: raw dims = (Y, Z); slice = X
+        else:                     
             y_vox, z_vox, x_vox = a_row, a_col, sidx
         mni = self.template_affine @ np.array([x_vox, y_vox, z_vox, 1.0])
         return tuple(mni[:3])
 
-    # ── Single-view handlers (view_id == '') ──
+    
     def _on_brain_press_px(self, x_px, y_px, view_id):
         if self.template_data is None:
             return
@@ -1812,7 +1754,7 @@ class ResultsTab(QWidget):
         if new_val != self.current_slice_idx:
             self.slice_slider.setValue(new_val)
 
-    # ── Triplanar handlers (view_id in axial/coronal/sagittal) ──
+    
     def _sync_triplanar_slices_to_crosshair(self):
         """Re-derive each plane's slice from the crosshair voxel (linked nav)."""
         if self.crosshair_mni is None or self.template_affine is None:
@@ -1821,9 +1763,9 @@ class ResultsTab(QWidget):
         vox = inv @ np.array([self.crosshair_mni[0], self.crosshair_mni[1],
                               self.crosshair_mni[2], 1.0])
         sh = self.template_data.shape
-        self.slice_sa = int(np.clip(round(vox[0]), 0, sh[0] - 1))   # X
-        self.slice_co = int(np.clip(round(vox[1]), 0, sh[1] - 1))   # Y
-        self.slice_ax = int(np.clip(round(vox[2]), 0, sh[2] - 1))   # Z
+        self.slice_sa = int(np.clip(round(vox[0]), 0, sh[0] - 1))   
+        self.slice_co = int(np.clip(round(vox[1]), 0, sh[1] - 1))   
+        self.slice_ax = int(np.clip(round(vox[2]), 0, sh[2] - 1))   
 
     def _on_tri_press_px(self, x_px, y_px, view):
         """Click/drag in a triplanar plane → move crosshair and re-center the
@@ -1843,25 +1785,23 @@ class ResultsTab(QWidget):
             return
         sidx = {'axial': self.slice_ax, 'coronal': self.slice_co,
                 'sagittal': self.slice_sa}[view]
-        # data coords (column, row) of the displayed (flipped+rotated) slice
+        
         mni = self._data_to_mni(view, dd[0], dd[1], sidx)
         if mni is None:
             return
         self.crosshair_mni = mni
 
-        # Linked navigation: convert MNI back to voxel and update the OTHER
-        # two planes' slices so they show this same 3D point.
         inv_aff = np.linalg.inv(self.template_affine)
         vox = inv_aff @ np.array([mni[0], mni[1], mni[2], 1.0])
         sh = self.template_data.shape
-        vx = max(0, min(sh[0] - 1, int(round(vox[0]))))   # X
-        vy = max(0, min(sh[1] - 1, int(round(vox[1]))))   # Y
-        vz = max(0, min(sh[2] - 1, int(round(vox[2]))))   # Z
-        if view == 'axial':        # X-Y plane → set coronal (Y), sagittal (X)
+        vx = max(0, min(sh[0] - 1, int(round(vox[0]))))   
+        vy = max(0, min(sh[1] - 1, int(round(vox[1]))))   
+        vz = max(0, min(sh[2] - 1, int(round(vox[2]))))   
+        if view == 'axial':        
             self.slice_co = vy; self.slice_sa = vx
-        elif view == 'coronal':    # X-Z plane → set axial (Z), sagittal (X)
+        elif view == 'coronal':    
             self.slice_ax = vz; self.slice_sa = vx
-        else:                      # sagittal Y-Z plane → set axial (Z), coronal (Y)
+        else:                      
             self.slice_ax = vz; self.slice_co = vy
 
         self._update_crosshair_readout(mni)
@@ -1892,14 +1832,14 @@ class ResultsTab(QWidget):
             if mode == '4d' or av.ndim == 4:
                 if net_idx >= av.shape[3]:
                     return (None, None)
-                # voxel belongs to this network where this component is the argmax & positive
+                
                 vols = av
                 best = np.argmax(vols, axis=3)
                 pos = vols.max(axis=3) > 0
                 mask = (best == net_idx) & pos
             elif mode == 'metric':
                 mask = av > 0
-            else:  # labels
+            else:  
                 lm = getattr(self, '_label_map', None) or {}
                 labs = [lab for lab, idx in lm.items() if idx == net_idx]
                 if not labs:
@@ -1907,13 +1847,11 @@ class ResultsTab(QWidget):
                 mask = np.isin(av, labs)
             return (mask, aff)
         except Exception as e:
-            print(f"⚠️ _network_mask error: {e}")
+            print(f"_network_mask error: {e}")
             return (None, None)
 
     def _update_subregion_panel(self, net_idx):
-        """Results #4: replace the panel below the brain with the cortical/
-        subcortical subregions that the selected network actually overlaps,
-        computed from the Harvard-Oxford atlas."""
+        
         if not hasattr(self, 'info_text'):
             return
         name = (self.network_names[net_idx]
@@ -2030,31 +1968,20 @@ class ResultsTab(QWidget):
                 pass
 
         self.crosshair_readout.setText(
-            f"<span style='color:#7dd3fc'>⊕ Network:</span> {net_html} &nbsp;·&nbsp; "
+            f"<span style='color:#7dd3fc'>Network:</span> {net_html} &nbsp;·&nbsp; "
             f"<span style='color:#7dd3fc'>Location:</span> "
             f"<span style='color:#cde4ff'>{region}</span>{ba_html}{wm_html}")
-        # Also refresh the subregion panel for the network under the crosshair (#4)
+        
         if net_idx is not None:
             self._update_subregion_panel(net_idx)
 
-    # ----------------------------------------------------------------------
-    # Rendering
-    # ----------------------------------------------------------------------
+    
     def _render_brain_left(self, highlighted_net_idx=None):
-        """
-        Render the current 2D slice with network overlays and crosshair.
-        
-        Handles:
-        - MNI ↔ voxel coordinate transformation
-        - Network centroid projection to 2D slice
-        - Proper anatomical orientations (L/R, P/A)
-        - Network highlighting with distinct colors
-        - Optional crosshair for interactive navigation
-        """
+       
         if self.template_data is None:
             return
         
-        # Safety check: make sure we're in single view mode and canvas exists
+        
         if self.view_mode != 'single' or self.brain_canvas is None or self.brain_fig is None:
             return
 
@@ -2062,36 +1989,29 @@ class ResultsTab(QWidget):
         ax = self.brain_fig.add_subplot(111)
         ax.set_facecolor('#0a0a14')
 
-        # ─────────────────────────────────────────────────────────────────────
-        # 1. Extract and display the 2D brain slice
-        # ─────────────────────────────────────────────────────────────────────
-        # MNI RAS convention: X (left-right), Y (posterior-anterior), Z (inferior-superior)
+        
         if self.current_view == 'axial':
-            # Axial: X-Y plane (left-right, posterior-anterior)
+            
             slice_2d = self.template_data[:, :, self.current_slice_idx]
-            slice_2d = np.fliplr(slice_2d)  # Flip X-axis for left-on-left neurological view
-            slice_2d = np.rot90(slice_2d, k=1)  # 90° rotation
+            slice_2d = np.fliplr(slice_2d)  
+            slice_2d = np.rot90(slice_2d, k=1)  
         elif self.current_view == 'coronal':
-            # Coronal: X-Z plane (left-right, inferior-superior)
+            
             slice_2d = self.template_data[:, self.current_slice_idx, :]
-            slice_2d = np.fliplr(slice_2d)  # Flip X-axis for left-on-left neurological view
-            slice_2d = np.rot90(slice_2d, k=1)  # 90° rotation
-        else:  # sagittal
-            # Sagittal: Y-Z plane (posterior-anterior, inferior-superior)
+            slice_2d = np.fliplr(slice_2d)  
+            slice_2d = np.rot90(slice_2d, k=1)  
+        else:  
             slice_2d = self.template_data[self.current_slice_idx, :, :]
-            slice_2d = np.fliplr(slice_2d)  # Flip Y-axis for anterior-right orientation
-            slice_2d = np.rot90(slice_2d, k=1)  # 90° rotation
+            slice_2d = np.fliplr(slice_2d)  
+            slice_2d = np.rot90(slice_2d, k=1)  
 
-        # Display template underlay
+        
         im = ax.imshow(slice_2d, cmap=self.colormap, origin='lower', 
                        interpolation='bilinear', aspect='auto')
         self.brain_fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
 
-        # ─────────────────────────────────────────────────────────────────────
-        # 2. Network overlay — soft activation blobs, pixel-aligned to the brain
-        # ─────────────────────────────────────────────────────────────────────
         if self.network_centroids and self.network_overlaps:
-            # Determine raw (untransformed) slice shape for this view
+            
             if self.current_view == 'axial':
                 raw_shape = self.template_data[:, :, self.current_slice_idx].shape
             elif self.current_view == 'coronal':
@@ -2099,7 +2019,7 @@ class ResultsTab(QWidget):
             else:
                 raw_shape = self.template_data[self.current_slice_idx, :, :].shape
 
-            # Prefer the EXACT atlas ROI footprint; fall back to centroid blobs
+            s
             overlay = self._build_atlas_overlay(self.current_view,
                                                 self.current_slice_idx,
                                                 raw_shape, highlighted_net_idx)
@@ -2107,12 +2027,11 @@ class ResultsTab(QWidget):
                 overlay = self._build_network_overlay(raw_shape, self.current_view,
                                                       highlighted_net_idx)
             if overlay is not None and overlay[..., 3].max() > 0:
-                # Apply the SAME orientation transform as the underlay
                 overlay = self._orient_slice(overlay, self.current_view)
                 ax.imshow(overlay, origin='lower', interpolation='nearest',
                           aspect='auto', zorder=10)
 
-            # Label the highlighted network at its (transformed) centroid
+            
             if highlighted_net_idx is not None and \
                highlighted_net_idx < len(self.network_centroids):
                 mni = self.network_centroids[highlighted_net_idx]
@@ -2137,9 +2056,7 @@ class ResultsTab(QWidget):
                                       edgecolor='none'))
 
 
-        # ─────────────────────────────────────────────────────────────────────
-        # 3. Interactive crosshair for click-to-navigate
-        # ─────────────────────────────────────────────────────────────────────
+        
         if hasattr(self, 'crosshair_mni') and self.crosshair_mni is not None:
             try:
                 ch_mni = self.crosshair_mni
@@ -2147,10 +2064,10 @@ class ResultsTab(QWidget):
                 ch_vox_homo = np.linalg.inv(self.template_affine) @ ch_homo
                 ch_vox = ch_vox_homo[:3]
                 
-                # Project crosshair to current slice (with relaxed tolerance)
+                
                 ch_in_slice = False
                 ch_x, ch_y = None, None
-                tolerance = 10.0  # More relaxed tolerance (10 voxels)
+                tolerance = 10.0  
                 
                 if self.current_view == 'axial':
                     if abs(ch_vox[2] - self.current_slice_idx) <= tolerance:
@@ -2187,11 +2104,9 @@ class ResultsTab(QWidget):
                                     edgecolor='#00FF00', linewidth=1),
                            zorder=17)
             except Exception as e:
-                print(f"⚠️ Error rendering crosshair: {e}")
+                print(f"Error rendering crosshair: {e}")
 
-        # ─────────────────────────────────────────────────────────────────────
-        # 4. Apply zoom and set display properties
-        # ─────────────────────────────────────────────────────────────────────
+        
         if self.zoom != 1.0:
             h, w = slice_2d.shape
             xlim_center = w / 2
@@ -2201,9 +2116,7 @@ class ResultsTab(QWidget):
             ax.set_xlim(xlim_center - x_range, xlim_center + x_range)
             ax.set_ylim(ylim_center - y_range, ylim_center + y_range)
 
-        # ─────────────────────────────────────────────────────────────────────
-        # 5. Anatomical labels and title
-        # ─────────────────────────────────────────────────────────────────────
+       
         view_names = {'axial': 'Axial (Z)', 'coronal': 'Coronal (Y)', 'sagittal': 'Sagittal (X)'}
         ax.set_title(f"{view_names[self.current_view]} - Slice {self.current_slice_idx}",
                      color='#7090b8', fontsize=11, fontweight='bold')
@@ -2212,7 +2125,7 @@ class ResultsTab(QWidget):
         ax.tick_params(colors='#6070a0', labelsize=8)
 
         self.brain_fig.tight_layout()
-        self._single_ax = ax            # remember for pixel->data mapping
+        self._single_ax = ax            
         self._update_canvas_display(self.brain_canvas, self.brain_fig)
 
     def _render_triplanar(self, highlighted_net_idx=None):
@@ -2220,7 +2133,7 @@ class ResultsTab(QWidget):
         if self.template_data is None:
             return
         
-        # Safety check: make sure we're in triplanar mode and canvases exist
+        
         if self.view_mode != 'triplanar' or self.brain_canvas_axial is None:
             return
         
@@ -2231,14 +2144,14 @@ class ResultsTab(QWidget):
         ]
         
         for view_name, fig, canvas in views_to_render:
-            # Temporarily set current view
+            
             old_view = self.current_view
             self.current_view = view_name
-            # Per-plane slice index for this view
+            
             sidx = {'axial': self.slice_ax, 'coronal': self.slice_co,
                     'sagittal': self.slice_sa}[view_name]
             
-            # Render to this figure
+            
             fig.clear()
             ax = fig.add_subplot(111)
             ax.set_facecolor('#0a0a14')
@@ -2251,18 +2164,17 @@ class ResultsTab(QWidget):
             else:  # sagittal
                 slice_2d = self.template_data[sidx, :, :]
             
-            # Apply MNI RAS neurological convention: flip left-right for all views
-            # This ensures: left hemisphere on left side, right on right side
+            
             slice_2d = np.fliplr(slice_2d)
             
-            # Apply 90° rotation to all views
+            
             slice_2d = np.rot90(slice_2d, k=1)
             
-            # Display
+            
             im = ax.imshow(slice_2d, cmap=self.colormap, origin='lower',
                           interpolation='bilinear', aspect='auto')
             
-            # Overlay networks — exact atlas footprint, pixel-aligned
+            
             if self.network_centroids and self.network_overlaps:
                 if view_name == 'axial':
                     raw_shape = self.template_data[:, :, sidx].shape
@@ -2280,7 +2192,7 @@ class ResultsTab(QWidget):
                     ax.imshow(overlay, origin='lower', interpolation='nearest',
                               aspect='auto', zorder=10)
             
-            # Crosshair
+            
             if self.crosshair_mni is not None:
                 try:
                     ch_mni = self.crosshair_mni
@@ -2309,14 +2221,14 @@ class ResultsTab(QWidget):
                 except:
                     pass
             
-            # Labels
+            
             view_titles = {'axial': 'Axial', 'coronal': 'Coronal', 'sagittal': 'Sagittal'}
             ax.set_title(f"{view_titles[view_name]} (Slice {sidx})", color='#7090b8', fontsize=9, fontweight='bold')
             ax.set_xticks([])
             ax.set_yticks([])
             ax.set_facecolor('#0a0a14')
             
-            # Apply zoom
+            
             if self.zoom != 1.0:
                 h, w = slice_2d.shape
                 xlim_center = w / 2
@@ -2329,10 +2241,10 @@ class ResultsTab(QWidget):
             fig.tight_layout()
             if not hasattr(self, '_tri_ax'):
                 self._tri_ax = {}
-            self._tri_ax[view_name] = ax    # remember for pixel->data mapping
+            self._tri_ax[view_name] = ax    
             self._update_canvas_display(canvas, fig)
             
-            # Restore view
+            
             self.current_view = old_view
 
     def _render_bar_graph(self, highlighted_net_idx=None):
@@ -2344,7 +2256,7 @@ class ResultsTab(QWidget):
         metric = self.current_results.get('overlap_metric', 'Dice')
         n = min(len(networks), len(overlaps), 40)
 
-        # theme-aware chart colors
+        
         try:
             tc = tm.figure_colors()
         except Exception:
@@ -2384,9 +2296,7 @@ class ResultsTab(QWidget):
         self.bar_fig.tight_layout()
         self._update_canvas_display(self.bar_canvas, self.bar_fig)
 
-    # ----------------------------------------------------------------------
-    # Data loading and table display
-    # ----------------------------------------------------------------------
+    
     @staticmethod
     def _world_bbox(shape, affine):
         """World-coordinate bounding box (min, max) over the volume's 8 corners."""
@@ -2404,7 +2314,7 @@ class ResultsTab(QWidget):
             mn_a, mx_a = self._world_bbox(shape_a, aff_a)
             mn_b, mx_b = self._world_bbox(shape_b, aff_b)
         except Exception:
-            return True  # don't block rendering on a geometry hiccup
+            return True  
         center_ok = np.all(np.abs((mn_a + mx_a)/2 - (mn_b + mx_b)/2) < center_tol)
         size_ok = np.all(np.abs((mx_a - mn_a) - (mx_b - mn_b)) < size_tol)
         return bool(center_ok and size_ok)
@@ -2416,7 +2326,7 @@ class ResultsTab(QWidget):
             bases = [Path(cnc.__file__).parent / 'data']
         except Exception:
             bases = []
-        # Also try alongside the configured atlas data directory
+        
         try:
             from nct_application.cbig_config import CBIGConfig
             ad = CBIGConfig.get_atlas_dir()
@@ -2445,13 +2355,13 @@ class ResultsTab(QWidget):
         atlas_shape = self._atlas_vol.shape[:3]
         if self._spaces_match(atlas_shape, self._atlas_aff,
                               self.template_data.shape, self.template_affine):
-            return  # already correct (e.g. MNI underlay + FSLMNI2mm atlas)
+            return  
 
         tp = self._find_space_template(space)
         if tp:
             disp = f"{space} (analysis space)"
             self.template_paths[disp] = tp
-            # add to the combo if not present
+            
             if self.underlay_combo.findText(disp) < 0:
                 self.underlay_combo.blockSignals(True)
                 self.underlay_combo.addItem(disp, disp)
@@ -2462,10 +2372,10 @@ class ResultsTab(QWidget):
                     self.underlay_combo.blockSignals(True)
                     self.underlay_combo.setCurrentIndex(idx)
                     self.underlay_combo.blockSignals(False)
-                print(f"ℹ️ Underlay switched to '{disp}' so the overlay matches "
+                print(f"Underlay switched to '{disp}' so the overlay matches "
                       f"the {space} analysis space.")
         else:
-            print(f"⚠️ Underlay is not in the {space} analysis space and no "
+            print(f"Underlay is not in the {space} analysis space and no "
                   f"matching template was found; overlay may be misaligned.")
 
     def display_results(self, results, space='FSLMNI2mm'):
@@ -2473,7 +2383,7 @@ class ResultsTab(QWidget):
         self.current_brain_space = space
         self.current_atlas_code = results.get('atlas_code', '')
 
-        # Extract networks, overlaps, p-values (handle dual components)
+        
         if 'components' in results and isinstance(results['components'], dict):
             components = results['components']
             if components:
@@ -2490,12 +2400,12 @@ class ResultsTab(QWidget):
             overlaps = results.get('overlaps', [])
             p_values = results.get('p_values', [])
 
-        # Store for overlay rendering
+        
         self.network_names = networks
         self.network_overlaps = overlaps
         self.network_pvalues = p_values
-        self._extract_centroids(results)   # tries to get MNI coordinates from BrainRenderer or fallback
-        self._compute_voxel_stats()        # per-network voxel counts (feature 2)
+        self._extract_centroids(results)   
+        self._compute_voxel_stats()        
 
         metric = results.get('overlap_metric', 'Dice')
         n = min(len(networks), len(overlaps), len(p_values))
@@ -2549,16 +2459,16 @@ class ResultsTab(QWidget):
             if idx >= 0:
                 self._on_underlay_changed()
             else:
-                # load first available
+                
                 first = list(self.template_paths.keys())[0]
                 self._load_template(first)
 
-        # Guarantee the underlay shares the atlas world space (MNI vs Colin etc.)
+        
         self._ensure_underlay_matches_space(space)
 
         self._render_bar_graph()
         self._render_brain_left()
-        # Results #4: show subregions for the highest-overlap network by default
+        
         if self.network_names:
             self._update_subregion_panel(0)
         self._render_decoding_empty()
@@ -2604,7 +2514,7 @@ class ResultsTab(QWidget):
             return 'metric', None
         n_uniq = len(uniq)
         if n_names and n_uniq == n_names:
-            # Labels correspond 1:1 to networks (contiguous OR scattered values)
+            
             return 'labels', {lab: i for i, lab in enumerate(uniq)}
         if n_names and n_uniq > n_names:
             assign = self._load_network_assignment(atlas_path)
@@ -2616,9 +2526,9 @@ class ResultsTab(QWidget):
                         lm[lab] = net
                 if lm:
                     return 'labels', lm
-            # Many unique values, no assignment -> treat as continuous metric
+            
             return 'metric', None
-        # Fewer labels than names (unusual) -> sequential best-effort
+        
         return 'labels', {lab: i for i, lab in enumerate(uniq)}
 
     def _network_colors(self, n):
@@ -2628,7 +2538,7 @@ class ResultsTab(QWidget):
             from nct_application.interactive_brain import _build_network_colors
             return _build_network_colors(n)
         except Exception:
-            # Fallback palette (only used if import fails)
+            
             base = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
                     '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#A9DFBF',
                     '#F1948A', '#D7BDE2', '#ABEBC6', '#FAD7A0', '#F5B7B1']
@@ -2653,20 +2563,19 @@ class ResultsTab(QWidget):
 
         H, W = raw_shape
         ii, jj = np.mgrid[0:H, 0:W]
-        # Underlay voxel coordinates for every pixel of this slice
-        if view == 'axial':       # slice = data[:, :, z]
+        
+        if view == 'axial':       
             v0, v1, v2 = ii, jj, np.full_like(ii, slice_idx)
-        elif view == 'coronal':   # slice = data[:, y, :]
+        elif view == 'coronal':   
             v0, v1, v2 = ii, np.full_like(ii, slice_idx), jj
-        else:                     # sagittal: data[x, :, :]
+        else:                     
             v0, v1, v2 = np.full_like(ii, slice_idx), ii, jj
 
         ua = self.template_affine
-        # underlay voxel -> world(MNI)
         wx = ua[0, 0]*v0 + ua[0, 1]*v1 + ua[0, 2]*v2 + ua[0, 3]
         wy = ua[1, 0]*v0 + ua[1, 1]*v1 + ua[1, 2]*v2 + ua[1, 3]
         wz = ua[2, 0]*v0 + ua[2, 1]*v1 + ua[2, 2]*v2 + ua[2, 3]
-        # world -> atlas voxel
+        
         inv = np.linalg.inv(self._atlas_aff)
         ax = np.round(inv[0, 0]*wx + inv[0, 1]*wy + inv[0, 2]*wz + inv[0, 3]).astype(int)
         ay = np.round(inv[1, 0]*wx + inv[1, 1]*wy + inv[1, 2]*wz + inv[1, 3]).astype(int)
@@ -2679,7 +2588,7 @@ class ResultsTab(QWidget):
         if mode == '4d' or av.ndim == 4:
             sx, sy, sz = av.shape[0], av.shape[1], av.shape[2]
             valid = (ax >= 0) & (ax < sx) & (ay >= 0) & (ay < sy) & (az >= 0) & (az < sz)
-            netmap = np.full((H, W), -1, int)   # network index per pixel
+            netmap = np.full((H, W), -1, int)   
             if valid.any():
                 vols = av[ax[valid], ay[valid], az[valid], :]
                 best = np.argmax(vols, axis=1)
@@ -2691,14 +2600,13 @@ class ResultsTab(QWidget):
             netmap = np.full((H, W), -1, int)
             if valid.any():
                 vals = av[ax[valid], ay[valid], az[valid]]
-                # Continuous map: everything above zero is the single component
                 netmap[valid] = np.where(vals > 0, 0, -1)
         else:  # 'labels'
             sx, sy, sz = av.shape
             valid = (ax >= 0) & (ax < sx) & (ay >= 0) & (ay < sy) & (az >= 0) & (az < sz)
             labels = np.zeros((H, W), int)
             labels[valid] = av[ax[valid], ay[valid], az[valid]].astype(int)
-            # Translate atlas label values -> network indices via the resolved map
+            
             netmap = np.full((H, W), -1, int)
             if label_map:
                 for lab, idx in label_map.items():
@@ -2747,26 +2655,26 @@ class ResultsTab(QWidget):
             if mni is None or overlap is None:
                 continue
             vox = (inv_aff @ np.array([mni[0], mni[1], mni[2], 1.0]))[:3]
-            # Map (raw_row, raw_col, slice_coord) for this view
-            if view == 'axial':       # slice = data[:, :, z] -> (X, Y)
+            
+            if view == 'axial':       
                 row, col, slc = vox[0], vox[1], vox[2]
-            elif view == 'coronal':   # slice = data[:, y, :] -> (X, Z)
+            elif view == 'coronal':   
                 row, col, slc = vox[0], vox[2], vox[1]
-            else:                     # sagittal: data[x, :, :] -> (Y, Z)
+            else:                     
                 row, col, slc = vox[1], vox[2], vox[0]
 
-            # Only stamp blobs whose centroid is near the current slice
+            
             if abs(slc - self.current_slice_idx) > 4.0:
                 continue
 
-            # Gaussian footprint: size & peak alpha scale with overlap (Dice)
+            
             sigma = 2.5 + float(overlap) * 7.0
             is_hi = (i == highlighted_net_idx)
             peak = min(0.9, 0.30 + float(overlap) * 1.4) * (1.2 if is_hi else 1.0)
             g = np.exp(-(((yy - row) ** 2 + (xx - col) ** 2) / (2.0 * sigma ** 2)))
             a = g * peak
             rgb = mcolors.to_rgb(colors[i % len(colors)])
-            # Max-alpha compositing: dominant network wins each pixel (no muddiness)
+            
             take = a > overlay[..., 3]
             for c in range(3):
                 overlay[..., c] = np.where(take, rgb[c], overlay[..., c])
@@ -2796,7 +2704,7 @@ class ResultsTab(QWidget):
         from matplotlib.patches import Circle
         import matplotlib.colors as mcolors
         rgb = mcolors.to_rgb(color)
-        # Concentric borderless circles with alpha falloff = soft glow
+        
         layers = [(2.6, 0.08), (2.0, 0.14), (1.5, 0.24),
                   (1.05, 0.45), (0.65, 0.80)]
         boost = 1.15 if highlighted else 1.0
@@ -2806,12 +2714,12 @@ class ResultsTab(QWidget):
                                  facecolor=rgb, edgecolor='none',
                                  alpha=min(a * boost, 1.0), zorder=z))
         if highlighted:
-            # bright soft core (still borderless) to mark the selected network
+            
             ax.add_patch(Circle((x, y), radius=base_radius * 0.32,
                                  facecolor='white', edgecolor='none',
                                  alpha=0.85, zorder=z + 1))
 
-    # ---- real MNI centroid computation -----------------------------------
+    
     def _find_atlas_file(self, space, author, abbr):
         """Locate the atlas NIfTI for the analyzed parcellation.
 
@@ -2835,7 +2743,7 @@ class ResultsTab(QWidget):
         root = Path(root)
         space = space or ''
 
-        # 1) Direct single-file candidate paths
+        
         for base in (root, root / 'atlases'):
             sp = base / space
             if author:
@@ -2849,9 +2757,6 @@ class ResultsTab(QWidget):
                         if p.exists():
                             return p
 
-        # 2) Multi-component ICA atlas: collect per-component files.
-        #    Component naming varies (e.g. HCPICA_thresh_zstat3, AL20_zstat3),
-        #    so match files that start with the abbr and contain a trailing index.
         comp_re = re.compile(r'(\d+)(?:\.nii(?:\.gz)?)$', re.IGNORECASE)
         for base in (root, root / 'atlases'):
             sp = base / space
@@ -2869,7 +2774,7 @@ class ResultsTab(QWidget):
                     comps.sort(key=lambda t: t[0])
                     return [p for _, p in comps]
 
-        # 3) Last resort: recursive glob for a single file, prefer matching space
+        
         hits = list(root.rglob(f"{abbr}.nii.gz"))
         for h in hits:
             if space and space in str(h):
@@ -2877,7 +2782,7 @@ class ResultsTab(QWidget):
         if hits:
             return hits[0]
 
-        # 4) Recursive glob for components anywhere under the space
+        
         comps = []
         for p in root.rglob('*.nii*'):
             name = p.name
@@ -2918,14 +2823,14 @@ class ResultsTab(QWidget):
         if n == 0:
             return
 
-        # Resolve atlas identity from the results dict
+        
         space = (results.get('space') or results.get('brain_space')
                  or self.current_brain_space or 'FSLMNI2mm')
         author = results.get('author') or results.get('atlas_author')
         abbr = (results.get('abbreviation') or results.get('atlas_code')
                 or self.current_atlas_code)
 
-        # Reset stored atlas (used for exact footprint overlay)
+        
         self._atlas_vol = None
         self._atlas_aff = None
         self._atlas_is_4d = False
@@ -2934,12 +2839,12 @@ class ResultsTab(QWidget):
 
         atlas_path = self._find_atlas_file(space, author, abbr)
 
-        # Multi-component ICA atlas: a list of per-component NIfTI files.
+        
         if isinstance(atlas_path, list) and atlas_path:
             try:
                 comp_imgs = [nib.load(str(p)) for p in atlas_path]
                 aff = comp_imgs[0].affine
-                # Stack components into a 4D volume (x, y, z, component)
+                
                 comp_data = [im.get_fdata() for im in comp_imgs]
                 data = np.stack(comp_data, axis=-1)
                 self._atlas_vol = data
@@ -2951,11 +2856,11 @@ class ResultsTab(QWidget):
                     self.network_centroids[i] = self._weighted_centroid_mni(
                         data[..., i], aff)
                 got = sum(c is not None for c in self.network_centroids)
-                print(f"✅ Loaded ICA atlas {abbr} from {len(atlas_path)} component "
+                print(f"Loaded ICA atlas {abbr} from {len(atlas_path)} component "
                       f"files (4D stack {data.shape}); {got}/{n} centroids")
             except Exception as e:
-                print(f"⚠️ Could not load ICA component atlas {abbr}: {e}")
-            atlas_path = None  # handled; skip the single-file branch below
+                print(f"Could not load ICA component atlas {abbr}: {e}")
+            atlas_path = None  
 
         if atlas_path is not None:
             try:
@@ -2978,8 +2883,8 @@ class ResultsTab(QWidget):
                     c = self._weighted_centroid_mni(data, aff)
                     if c is not None and n > 0:
                         self.network_centroids[0] = c
-                else:  # 'labels'
-                    # Group voxels by network index (union of its labels/parcels)
+                else:  
+                    
                     for net_idx in range(n):
                         labs = [lab for lab, idx in (label_map or {}).items()
                                 if idx == net_idx]
@@ -2990,14 +2895,14 @@ class ResultsTab(QWidget):
                             self.network_centroids[net_idx] = \
                                 self._mask_centroid_mni(mask, aff)
                 got = sum(c is not None for c in self.network_centroids)
-                print(f"✅ Loaded atlas {Path(atlas_path).name} (shape {data.shape}, "
+                print(f"Loaded atlas {Path(atlas_path).name} (shape {data.shape}, "
                       f"mode={mode}); {got}/{n} centroids")
             except Exception as e:
-                print(f"⚠️ Could not load atlas: {e}")
+                print(f"Could not load atlas: {e}")
         else:
-            print(f"⚠️ Atlas file not found for {abbr} ({author}/{space}); using name hints")
+            print(f"Atlas file not found for {abbr} ({author}/{space}); using name hints")
 
-        # Fallback for any missing: anatomical name hints
+        
         try:
             from nct_application.interactive_brain import _mni_hint
         except Exception:
@@ -3009,9 +2914,7 @@ class ResultsTab(QWidget):
                     if hint is not None and not np.allclose(hint, 0):
                         self.network_centroids[i] = np.asarray(hint, dtype=float)
 
-    # ----------------------------------------------------------------------
-    # Row click & literature panel
-    # ----------------------------------------------------------------------
+    
     def _load_neurosynth_data(self):
         """Load the bundled precomputed Neurosynth decoding JSON (if present)."""
         self._neurosynth_data = None
@@ -3027,11 +2930,11 @@ class ResultsTab(QWidget):
                     import json
                     with open(cand, 'r', encoding='utf-8') as fh:
                         self._neurosynth_data = json.load(fh)
-                    print(f"✅ Loaded Neurosynth decoding bundle: {cand.name}")
+                    print(f"Loaded Neurosynth decoding bundle: {cand.name}")
                     return
             print("ℹ️ No neurosynth_decoding.json found; decoding panel will show a hint.")
         except Exception as e:
-            print(f"⚠️ Could not load Neurosynth decoding bundle: {e}")
+            print(f"Could not load Neurosynth decoding bundle: {e}")
 
     def _render_decoding_empty(self, message=None):
         msg = message or "Click a network in the results table to see its associated functional terms."
@@ -3053,7 +2956,7 @@ class ResultsTab(QWidget):
         atlas = getattr(self, 'current_atlas_code', '') or ''
         atlas_entry = data.get(atlas)
         if atlas_entry is None:
-            # try a case-insensitive / suffix-tolerant match
+            
             for k in data:
                 if k.lower() == atlas.lower():
                     atlas_entry = data[k]
@@ -3064,7 +2967,7 @@ class ResultsTab(QWidget):
                 f"in atlas <b>{atlas or '—'}</b>.")
             return
 
-        terms = atlas_entry[network_name]  # [[term, r], ...] already top-N, r desc
+        terms = atlas_entry[network_name]  
         if not terms:
             self._render_decoding_empty(f"No functional terms passed filtering for "
                                         f"<b>{network_name}</b>.")
@@ -3080,10 +2983,10 @@ class ResultsTab(QWidget):
             sample_banner = (
                 "<div style='color:#fbbf24; background:#2a230a; border:1px solid #4a3a10;"
                 " border-radius:4px; padding:5px 8px; margin-bottom:8px; font-size:8.5pt;'>"
-                "⚠ SAMPLE placeholder values — run <i>precompute_neurosynth.py</i> "
+                "SAMPLE placeholder values — run <i>precompute_neurosynth.py</i> "
                 "to generate real Neurosynth r-values.</div>")
 
-        # Bars scaled to the largest positive r in this list
+        
         max_r = max((r for _, r in terms), default=0.0) or 1.0
         rows_html = []
         for term, r in terms:
@@ -3111,7 +3014,7 @@ class ResultsTab(QWidget):
         )
         self.decoding_view.setHtml(html)
 
-    # ----------------------- Neurotransmitter panel -----------------------
+    
     def _load_neurotransmitter_data(self):
         """Load the bundled precomputed neurotransmitter mapping JSON (if present)."""
         self._neuro_data = None
@@ -3127,11 +3030,11 @@ class ResultsTab(QWidget):
                     import json
                     with open(cand, 'r', encoding='utf-8') as fh:
                         self._neuro_data = json.load(fh)
-                    print(f"✅ Loaded neurotransmitter bundle: {cand.name}")
+                    print(f"Loaded neurotransmitter bundle: {cand.name}")
                     return
             print("ℹ️ No neurotransmitter_mapping.json found; PET tab will show a hint.")
         except Exception as e:
-            print(f"⚠️ Could not load neurotransmitter bundle: {e}")
+            print(f"Could not load neurotransmitter bundle: {e}")
 
     def _render_neuro_empty(self, message=None):
         msg = message or ("Click a network to see its association with PET "
@@ -3164,7 +3067,7 @@ class ResultsTab(QWidget):
                 f"in atlas <b>{atlas or '—'}</b>.")
             return
 
-        rows = atlas_entry[network_name]  # [[system, r, p_spin], ...] sorted by |r|
+        rows = atlas_entry[network_name]  
         if not rows:
             self._render_neuro_empty(f"No receptor data for <b>{network_name}</b>.")
             return
@@ -3180,7 +3083,7 @@ class ResultsTab(QWidget):
                 "⚠ SAMPLE placeholder values — run <i>precompute_neurotransmitter.py</i> "
                 "for real values.</div>")
 
-        # Bars are scaled to the largest |r| so both signs are visible.
+        
         max_abs = max((abs(r) for _, r, *_ in rows), default=0.0) or 1.0
         rows_html = []
         for entry in rows:
@@ -3189,8 +3092,8 @@ class ResultsTab(QWidget):
             p = entry[2] if len(entry) > 2 else None
             frac = max(0.0, min(1.0, abs(r) / max_abs))
             barw = int(frac * 110)
-            rcol = '#c084fc' if r >= 0 else '#f0789b'   # purple +, pink −
-            # Significance styling from p_spin
+            rcol = '#c084fc' if r >= 0 else '#f0789b'   
+            
             if p is None:
                 sig_html = "<span style='color:#5a6a85;'>—</span>"
                 name_color = '#dbe7f5'
@@ -3200,7 +3103,7 @@ class ResultsTab(QWidget):
                 name_color = '#ffffff'
             else:
                 sig_html = f"<span style='color:#6b7a90;'>p={p:.2f}</span>"
-                name_color = '#8a9bb5'   # dim non-significant
+                name_color = '#8a9bb5'   
             rows_html.append(
                 "<tr>"
                 f"<td style='padding:3px 8px 3px 2px; color:{name_color}; white-space:nowrap;'>{system}</td>"
@@ -3248,11 +3151,11 @@ class ResultsTab(QWidget):
                     import json
                     with open(cand, 'r', encoding='utf-8') as fh:
                         self._trans_data = json.load(fh)
-                    print(f"✅ Loaded transcriptomics bundle: {cand.name}")
+                    print(f"Loaded transcriptomics bundle: {cand.name}")
                     return
             print("ℹ️ No transcriptomics_mapping.json found; AHBA tab will show a hint.")
         except Exception as e:
-            print(f"⚠️ Could not load transcriptomics bundle: {e}")
+            print(f"Could not load transcriptomics bundle: {e}")
 
     def _render_trans_empty(self, message=None):
         msg = message or ("Click a network to see its association with receptor-gene "
@@ -3282,7 +3185,7 @@ class ResultsTab(QWidget):
                 f"No receptor-gene mapping for <b>{network_name}</b> "
                 f"in atlas <b>{atlas or '—'}</b>.")
             return
-        rows = atlas_entry[network_name]  # [["GENE (SYSTEM)", r, p_spin], ...]
+        rows = atlas_entry[network_name]  
         if not rows:
             self._render_trans_empty(f"No gene data for <b>{network_name}</b>.")
             return
@@ -3300,12 +3203,12 @@ class ResultsTab(QWidget):
         max_abs = max((abs(r) for _, r, *_ in rows), default=0.0) or 1.0
         rows_html = []
         for entry in rows:
-            label = entry[0]            # "GENE (SYSTEM)"
+            label = entry[0]            
             r = entry[1]
             p = entry[2] if len(entry) > 2 else None
             frac = max(0.0, min(1.0, abs(r) / max_abs))
             barw = int(frac * 110)
-            rcol = '#34d399' if r >= 0 else '#f0789b'   # teal +, pink −
+            rcol = '#34d399' if r >= 0 else '#f0789b'   
             if p is None:
                 sig_html = "<span style='color:#5a6a85;'>—</span>"; name_color = '#dbe7f5'
             elif p < 0.05:
@@ -3369,13 +3272,13 @@ class ResultsTab(QWidget):
             mni = self.network_centroids[row]
             mni_str = f"X={mni[0]:.1f},  Y={mni[1]:.1f},  Z={mni[2]:.1f} mm"
 
-        # Results #4: show the selected network's cortical subregion breakdown
+        
         self._update_subregion_panel(row)
-        # Results #3: update the crosshair readout for this network's centroid
+        
         if row < len(self.network_centroids) and self.network_centroids[row] is not None:
             self._update_crosshair_readout(self.network_centroids[row])
 
-        # Highlight table row
+        
         n_rows = self.table.rowCount()
         for r in range(n_rows):
             for c in range(3):
@@ -3390,26 +3293,26 @@ class ResultsTab(QWidget):
                         elif pv < 0.05: item.setBackground(QColor('#252010'))
                         else: item.setBackground(QColor('#07070f'))
 
-        # Set crosshair to network centroid FIRST (before rendering)
+        
         if row < len(self.network_centroids) and self.network_centroids[row] is not None:
             cent = self.network_centroids[row]
-            # Ensure it's a proper tuple of floats
+            
             self.crosshair_mni = (float(cent[0]), float(cent[1]), float(cent[2]))
             self.current_highlighted_idx = row
-            print(f"✅ Crosshair set to network {row}: MNI {self.crosshair_mni}")
+            print(f"Crosshair set to network {row}: MNI {self.crosshair_mni}")
             print(f"   Current view: {self.current_view}, slice: {self.current_slice_idx}, template_data available: {self.template_data is not None}")
         else:
-            print(f"❌ Cannot set crosshair - network {row} centroid is None")
+            print(f"Cannot set crosshair - network {row} centroid is None")
             self.crosshair_mni = None
         
-        # Then render brain with crosshair visible
+        
         if self.view_mode == 'triplanar':
             self._render_triplanar(highlighted_net_idx=row)
         else:
             self._render_brain_left(highlighted_net_idx=row)
         self._render_bar_graph(highlighted_net_idx=row)
 
-        # Populate the functional decoding panel for this network
+        
         self._update_decoding_panel(name)
         self._update_neuro_panel(name)
         self._update_trans_panel(name)
@@ -3418,22 +3321,22 @@ class ResultsTab(QWidget):
         """Handle switching between single panel and triplanar view modes."""
         if self.viewmode_triplanar.isChecked():
             self.view_mode = 'triplanar'
-            self.view_row_container.hide()  # Hide view buttons in triplanar mode
+            self.view_row_container.hide()  
             self._setup_triplanar_view()
         else:
             self.view_mode = 'single'
-            self.view_row_container.show()  # Show view buttons in single mode
+            self.view_row_container.show()  
             self._setup_single_view()
 
     def _setup_single_view(self):
         """Setup single panel brain view."""
-        # Clear and reset container
+        
         while self.brain_container_layout.count():
             widget = self.brain_container_layout.takeAt(0).widget()
             if widget:
                 widget.deleteLater()
         
-        # Clear figure references
+        
         self.brain_fig_axial = None
         self.brain_fig_coronal = None
         self.brain_fig_sagittal = None
@@ -3441,7 +3344,7 @@ class ResultsTab(QWidget):
         self.brain_canvas_coronal = None
         self.brain_canvas_sagittal = None
         
-        # Add single interactive canvas (click + drag crosshair)
+        
         self.brain_fig = plt.Figure(figsize=(8, 6), facecolor='#0a0a14')
         self.brain_canvas = self._make_canvas(self.brain_fig, view_id='')
         self.brain_canvas.setStyleSheet("background-color: #0a0a14; border: 1px solid #2a3a5a; border-radius: 4px;")
@@ -3498,13 +3401,13 @@ class ResultsTab(QWidget):
             return
         
         try:
-            # Set current view and slice for conversion
+            
             old_view = self.current_view
             old_slice = self.current_slice_idx
             
             self.current_view = view
             
-            # Convert click to MNI
+            
             x_pix, y_pix = event.xdata, event.ydata
             
             if view == 'axial':
@@ -3529,11 +3432,9 @@ class ResultsTab(QWidget):
             self._render_triplanar(highlighted_net_idx=self.current_highlighted_idx)
             
         except Exception as e:
-            print(f"⚠️ Error in triplanar click: {e}")
+            print(f"Error in triplanar click: {e}")
 
-    # ----------------------------------------------------------------------
-    # Export (unchanged from original)
-    # -----------------------------------------------------------------------
+    
     def _on_brain_canvas_click(self, event):
         """
         Handle mouse clicks on brain map for interactive crosshair navigation.
@@ -3549,12 +3450,12 @@ class ResultsTab(QWidget):
         try:
             x_pix, y_pix = event.xdata, event.ydata
             
-            # Get shape of current slice for reference
+            
             if self.current_view == 'axial':
                 shape = self.template_data[:, :, self.current_slice_idx].shape
-                # Convert pixel coords back to voxel coords
+                
                 z_vox = self.current_slice_idx
-                # Since we use np.rot90 with k=1, we need to reverse the rotation
+                
                 x_vox = x_pix
                 y_vox = y_pix
                 # Convert to MNI
@@ -3585,7 +3486,7 @@ class ResultsTab(QWidget):
                   f"{self.crosshair_mni[1]:.1f}, {self.crosshair_mni[2]:.1f})")
         
         except Exception as e:
-            print(f"⚠️ Error processing brain click: {e}")
+            print(f"Error processing brain click: {e}")
 
     def _export_significant_niftis(self):
         """Feature 3: save one NIfTI mask per significant network (p<0.05)."""
@@ -3613,7 +3514,7 @@ class ResultsTab(QWidget):
             elif skipped:
                 msg += f"\n\nSkipped {len(skipped)} network(s) (not significant / no voxels)."
             QMessageBox.information(self, "Export Complete", msg)
-            print(f"✅ Saved {len(saved)} significant-network NIfTIs to {out_dir}")
+            print(f"Saved {len(saved)} significant-network NIfTIs to {out_dir}")
         except Exception as e:
             traceback.print_exc()
             QMessageBox.critical(self, "Export Error", str(e))
@@ -3643,7 +3544,7 @@ class ResultsTab(QWidget):
                 label_map=self._label_map,
                 extra={'voxel_stats_available': bool(getattr(self, '_voxel_stats', None))})
             QMessageBox.information(self, "Saved", f"Results saved to:\n{path}")
-            print(f"✅ Session saved: {path}")
+            print(f"Session saved: {path}")
         except Exception as e:
             traceback.print_exc()
             QMessageBox.critical(self, "Save Error", str(e))
@@ -3663,20 +3564,17 @@ class ResultsTab(QWidget):
             results['atlas_code'] = data.get('atlas_code', '')
             space = data.get('space') or 'FSLMNI2mm'
 
-            # display_results re-resolves the atlas volume from atlas identity,
-            # which also rebuilds centroids + voxel stats.
             self.display_results(results, space=space)
 
-            # If atlas volume couldn't be re-resolved, restore saved centroids
             if getattr(self, '_atlas_vol', None) is None:
                 saved_cent = data.get('centroids') or []
                 self.network_centroids = [
                     (tuple(c) if c is not None else None) for c in saved_cent]
-                print("ℹ️ Atlas volume not found on reload; using saved centroids. "
+                print("Atlas volume not found on reload; using saved centroids. "
                       "Per-network NIfTI export and voxel stats unavailable "
                       "until the atlas data is present.")
             QMessageBox.information(self, "Loaded", f"Results loaded from:\n{path}")
-            print(f"✅ Session loaded: {path}")
+            print(f"Session loaded: {path}")
         except Exception as e:
             traceback.print_exc()
             QMessageBox.critical(self, "Load Error", str(e))
@@ -3716,9 +3614,6 @@ class ResultsTab(QWidget):
             QMessageBox.critical(self, "Export Error", str(e))
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  MAIN WINDOW
-# ═══════════════════════════════════════════════════════════════════════════════
 
 class NCTMainWindow(QMainWindow):
 
@@ -3726,23 +3621,19 @@ class NCTMainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Multimodal Brain Network Characterization Tool (MBCT)")
         self.setMinimumSize(QSize(1100, 800))
-        # Global theme is applied at the QApplication level (see entry point);
-        # no per-window stylesheet needed.
-
+        
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
 
-        # Theme toggle button, pinned to the top-right corner of the tab bar
+        
         self.theme_btn = QPushButton()
         self.theme_btn.setObjectName("themeToggle")
         self.theme_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.theme_btn.clicked.connect(self._toggle_theme)
-        # label points at the theme you'd switch TO
+        
         self.theme_btn.setText("◐  Light theme" if tm.CURRENT == 'dark' else "◑  Dark theme")
         self.tabs.setCornerWidget(self.theme_btn, Qt.Corner.TopRightCorner)
 
-        # Create tabs with new modules (with breadcrumbs so a hard crash in any
-        # one tab is localized in startup_error.log)
         def _bc(m):
             try:
                 p = Path(__file__).parent / "startup_error.log"
@@ -3754,9 +3645,7 @@ class NCTMainWindow(QMainWindow):
         _bc("HomeTab");          self.home_tab = HomeTab()
         _bc("AnalysisTab");      self.analysis_tab = AnalysisTab(self)
         _bc("ResultsTab");       self.results_tab  = ResultsTab()
-        # The "core" edition (used for the published/manuscript build) ships
-        # only the multimodal annotation pipeline: Home, Analysis, Results, Help.
-        # The full edition adds the Brain Viewer, Connectivity and Utilities.
+        
         if MBCT_EDITION == 'full':
             _bc("BrainViewerStatsTab"); self.brain_viewer_tab = BrainViewerStatsTab()
             _bc("ConnectivityTab");     self.connectivity_tab = ConnectivityTab(self)
@@ -3768,7 +3657,7 @@ class NCTMainWindow(QMainWindow):
         _bc("HelpTab");          self.help_tab = HelpTab()
         _bc("all tabs built")
 
-        # Add tabs (Home first)
+      
         self.tabs.addTab(self.home_tab, "🏠  Home")
         self.tabs.addTab(self.analysis_tab, "🔬  Analysis")
         self.tabs.addTab(self.results_tab,  "📊  Results")
@@ -3778,44 +3667,40 @@ class NCTMainWindow(QMainWindow):
             self.tabs.addTab(self.utilities_tab, "🔧 Utilities")
         self.tabs.addTab(self.help_tab, "❓ Help")
 
-        # Utilities "Open in Viewer" handoff: load the produced file as an overlay
-        # and switch to the Brain Viewer tab. (Full edition only.)
+        
         if MBCT_EDITION == 'full':
             def _open_in_viewer(path):
                 try:
                     self.brain_viewer_tab.load_overlay_path(path)
                     self.tabs.setCurrentWidget(self.brain_viewer_tab)
                 except Exception as _e:
-                    print(f"⚠️ Open in Viewer failed: {_e}")
+                    print(f"Open in Viewer failed: {_e}")
             self.utilities_tab.file_ready.connect(_open_in_viewer)
         
-        # Link parent reference for template scanning in ResultsTab
+        
         self.results_tab.parent_main = self
         
-        # Note: BrainViewerEnhanced uses overlay manager for custom maps
-        # No template initialization needed - users load their own maps
-
         self.analysis_tab.analysis_done.connect(
             lambda r, s: self.results_tab.display_results(r, s))
 
         self._update_window_icon()
-        print("✅ NCT Application ready!")
+        print("NCT Application ready!")
 
     def _toggle_theme(self):
         """Switch between the Windows 11 (light) and dark-navy themes live."""
         app = QApplication.instance()
         new_theme = tm.toggle(app)
-        # update button label to point at the *other* theme
+        
         if new_theme == 'win11':
             self.theme_btn.setText("◑  Dark theme")
         else:
             self.theme_btn.setText("◐  Light theme")
-        # swap the window/taskbar icon to match the theme
+        
         self._update_window_icon(new_theme)
-        # re-style widgets that carry their own stylesheet so they follow suit
+        
         if self.brain_viewer_tab is not None and hasattr(self.brain_viewer_tab, 'apply_external_theme'):
             self.brain_viewer_tab.apply_external_theme(new_theme)
-        # re-render any theme-aware plots so chart backgrounds match
+        
         for tabw, meth in ((self.results_tab, '_render_bar_graph'),
                            (self.results_tab, '_render_brain_left')):
             if hasattr(tabw, meth):
@@ -3844,10 +3729,6 @@ class NCTMainWindow(QMainWindow):
             pass
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  ENTRY POINT
-# ═══════════════════════════════════════════════════════════════════════════════
-
 def main():
     """Application entry point (callable, so edition launchers can invoke it
     directly — runpy/module tricks are unreliable inside a PyInstaller bundle)."""
@@ -3872,12 +3753,12 @@ def main():
     app.setStyle('Fusion')
     _crumb("QApplication created")
 
-    # Detect the OS light/dark preference and match it on launch.
+    
     initial = tm.detect_os_theme()
     tm.apply_theme(app, initial)
     _crumb(f"theme applied = {initial}")
 
-    # Show splash screen with graphical abstract
+    
     from splash_screen import SplashScreen
     splash = SplashScreen()
     splash.show()
@@ -3885,8 +3766,6 @@ def main():
     splash.exec()
     _crumb("splash closed; constructing main window")
 
-    # Construct the main window with a crash guard so any startup error is
-    # written to a log file (and shown) instead of vanishing on the console.
     try:
         win = NCTMainWindow()
         _crumb("NCTMainWindow constructed")
