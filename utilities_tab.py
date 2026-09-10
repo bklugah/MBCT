@@ -1,3 +1,4 @@
+#Klugah-Brown 2026
 """
 utilities_tab.py
 ================
@@ -44,8 +45,6 @@ except Exception:
     anat = None
 
 
-# User-chosen Neurosynth corpus directory (set via the data panel / settings).
-# None means "auto-resolve" (project corpus folder, then home cache).
 _USER_CORPUS_DIR = None
 
 
@@ -55,9 +54,7 @@ def set_neurosynth_dir(path):
     _USER_CORPUS_DIR = path or None
 
 
-# Non-cognitive / methodological / anatomical vocabulary to hide from the
-# decoded term profile (matches the curated stop-list described in the
-# manuscript). Matching is done on whole words within the cleaned term.
+
 _NOISE_TERMS = {
     # method / acquisition / analysis
     'fmri', 'mri', 'pet', 'eeg', 'meg', 'bold', 'voxel', 'voxels', 'cluster',
@@ -95,14 +92,14 @@ def _is_noise(term):
         return True
     if t in _NOISE_TERMS:
         return True
-    # multiword terms: noise if every word is itself noise
+    
     words = t.split()
     if len(words) > 1 and all(w in _NOISE_TERMS for w in words):
         return True
     return False
 
 
-# Standard spaces this app supports: (display, shape, voxel-size mm)
+
 STANDARD_SPACES = {
     'FSLMNI2mm': ((91, 109, 91), 2.0),
     'FSLMNI1mm': ((182, 218, 182), 1.0),
@@ -110,9 +107,7 @@ STANDARD_SPACES = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Small shared helpers
-# ---------------------------------------------------------------------------
+
 def _load_nifti(path):
     """Load a NIfTI, returning (data, affine, header). 4D -> first volume."""
     img = nib.load(str(path))
@@ -163,10 +158,10 @@ def _colors():
     would be invisible on the dark panel). Accent hues are used only for
     headings/section labels."""
     return {
-        'accent': '#60a5fa',      # section labels
-        'heading': '#7dd3fc',     # panel titles
-        'body': '#e6e9ef',        # blurbs / secondary text  -> near-white
-        'status_fg': '#ffffff',   # status text -> white
+        'accent': '#60a5fa',      
+        'heading': '#7dd3fc',     
+        'body': '#e6e9ef',        
+        'status_fg': '#ffffff',   #
         'status_bg': '#141520',
         'status_border': '#2a3a5a',
         'sel_bg': '#2f5a94',
@@ -181,15 +176,12 @@ def _section(text):
     return l
 
 
-# ---------------------------------------------------------------------------
-# Base panel: gives each tool a consistent input row, status line, and a
-# Save / Open-in-Viewer button pair.
-# ---------------------------------------------------------------------------
+
 class _ToolPanel(QWidget):
     def __init__(self, owner, title, blurb):
         super().__init__()
-        self.owner = owner          # the UtilitiesTab (for file_ready signal)
-        self._result = None         # (data, affine, header) pending save
+        self.owner = owner          
+        self._result = None         
         self.root = QVBoxLayout(self)
         self.root.setContentsMargins(16, 14, 16, 14)
         self.root.setSpacing(10)
@@ -274,9 +266,7 @@ class _ToolPanel(QWidget):
             QMessageBox.critical(self, "Open in Viewer error", str(e))
 
 
-# ---------------------------------------------------------------------------
-# 1. Converter — resample onto a standard space's real reference grid
-# ---------------------------------------------------------------------------
+
 class ConverterPanel(_ToolPanel):
     def __init__(self, owner):
         super().__init__(owner, "Space Converter",
@@ -328,13 +318,12 @@ class ConverterPanel(_ToolPanel):
         data, affine, header = self._in
         space = self.space_combo.currentData()
         shape, vox = STANDARD_SPACES[space]
-        # Build the standard space's real affine: diagonal voxel size,
-        # origin centered so the FOV matches the standard template extent.
+        
         ref_affine = np.eye(4)
-        ref_affine[0, 0] = -vox      # radiological L-R like FSL MNI
+        ref_affine[0, 0] = -vox      
         ref_affine[1, 1] = vox
         ref_affine[2, 2] = vox
-        # center the volume on MNI origin
+        
         ref_affine[0, 3] = vox * (shape[0] // 2)
         ref_affine[1, 3] = -vox * (shape[1] // 2)
         ref_affine[2, 3] = -vox * (shape[2] // 2)
@@ -355,9 +344,7 @@ class ConverterPanel(_ToolPanel):
             QMessageBox.critical(self, "Convert error", str(e))
 
 
-# ---------------------------------------------------------------------------
-# 2. Threshold & Binarize
-# ---------------------------------------------------------------------------
+
 class ThresholdPanel(_ToolPanel):
     def __init__(self, owner):
         super().__init__(owner, "Threshold & Binarize",
@@ -447,16 +434,14 @@ class ThresholdPanel(_ToolPanel):
                  + (f", {removed} small clusters removed." if removed else "."))
 
 
-# ---------------------------------------------------------------------------
-# 3. ROI Tool — build (sphere / atlas label) AND extract signal
-# ---------------------------------------------------------------------------
+
 class ROIPanel(_ToolPanel):
     def __init__(self, owner):
         super().__init__(owner, "ROI Tool",
             "Build an ROI (a sphere at an MNI coordinate, or one atlas label "
             "as a mask) and/or extract signal from maps within an ROI.")
-        self._roi = None       # (mask_data, affine)
-        self._extract_maps = []  # list of (name, data, affine)
+        self._roi = None       
+        self._extract_maps = []  
 
         # --- Build section ---
         self.root.addWidget(_section("Build ROI"))
@@ -522,7 +507,7 @@ class ROIPanel(_ToolPanel):
         self.root.addWidget(self.table)
 
         self._status_line()
-        self._save_row()   # saves the built ROI mask
+        self._save_row()   
         self._populate_regions()
 
     def _populate_regions(self):
@@ -619,7 +604,7 @@ class ROIPanel(_ToolPanel):
         for name, data, aff in self._extract_maps:
             m = mask
             if data.shape != mask.shape or not np.allclose(aff, maff):
-                # auto-resample the MASK onto the map grid (nearest) + note it
+                
                 m, _ = _resample_to(mask, maff, aff, data.shape, labels=True)
                 notes.append(f"{name}: resampled ROI to map grid")
             sel = data[m > 0.5]
@@ -638,9 +623,6 @@ class ROIPanel(_ToolPanel):
         self.status.setText(note)
 
 
-# ---------------------------------------------------------------------------
-# 4. Combine Maps — arithmetic + logical modes
-# ---------------------------------------------------------------------------
 class CombinePanel(_ToolPanel):
     def __init__(self, owner):
         super().__init__(owner, "Combine Maps",
@@ -752,17 +734,14 @@ class CombinePanel(_ToolPanel):
         self._set_result(np.asarray(out, dtype=np.float32), affine, header, note=note)
 
 
-# ---------------------------------------------------------------------------
-# 5. Term -> Map  (NiMARE / Neurosynth)
-# ---------------------------------------------------------------------------
 class _NimareWorker(QThread):
-    done = pyqtSignal(object)     # (data, affine) or None
+    done = pyqtSignal(object)     
     failed = pyqtSignal(str)
     progress = pyqtSignal(str)
 
     def __init__(self, kind, payload):
         super().__init__()
-        self.kind = kind          # 'term_map' | 'decode_point'
+        self.kind = kind          
         self.payload = payload
 
     def run(self):
@@ -783,19 +762,17 @@ class _NimareWorker(QThread):
         except Exception as e:
             self.failed.emit(f"{e}\n{traceback.format_exc()}")
 
-    # Where the Neurosynth v7 corpus lives. Resolved at runtime so it can be
-    # overridden by the app's "Neurosynth Data" setting; falls back to the
-    # in-project corpus folder and then the legacy auto-download cache.
+    
     @staticmethod
     def _corpus_dir():
         import os
-        # 1) explicit override via env or module-level setting
+        
         override = os.environ.get("MBCT_NEUROSYNTH_DIR")
         if override and os.path.isdir(override):
             return override
         if _USER_CORPUS_DIR and os.path.isdir(_USER_CORPUS_DIR):
             return _USER_CORPUS_DIR
-        # 2) search bundled-resource dir, the project dir, and the user-data dir
+        
         search_roots = []
         try:
             from paths import resource_dir, user_data_dir
@@ -811,7 +788,7 @@ class _NimareWorker(QThread):
                          root / "corpus"):
                 if cand.is_dir() and any(cand.glob("*coordinates.tsv.gz")):
                     return str(cand)
-        # 3) legacy auto-download cache in the home dir
+        
         home = os.path.join(os.path.expanduser("~"), ".mbct_neurosynth")
         for cand in (os.path.join(home, "neurosynth"), home):
             if os.path.isdir(cand):
@@ -857,9 +834,7 @@ class _NimareWorker(QThread):
                 f"Corpus folder '{folder}' is missing: {', '.join(missing)}.")
 
         self.progress.emit("Loading local Neurosynth corpus…")
-        # NiMARE expects annotations as a list of dicts pairing each features
-        # file with its vocabulary. (Passing a bare path fails on some versions
-        # with: string indices must be integers — annotations_dict["features"].)
+        
         annotations = [{"vocabulary": vocab, "features": feats}] if vocab else \
                       [{"features": feats}]
         try:
@@ -867,12 +842,11 @@ class _NimareWorker(QThread):
                 coordinates_file=coords, metadata_file=meta,
                 annotations_files=annotations)
         except (TypeError, KeyError):
-            # Fallback for versions that accept a bare features path.
+            
             dset = convert_neurosynth_to_dataset(
                 coordinates_file=coords, metadata_file=meta,
                 annotations_files=feats)
-        # Neurosynth coordinates are MNI152; tag the space so NiMARE applies the
-        # right transforms (and to silence the "unrecognized space UNKNOWN" note).
+        
         try:
             dset.space = "mni152_2mm"
             if "space" in dset.coordinates.columns:
@@ -895,8 +869,6 @@ class _NimareWorker(QThread):
         meta = MKDAChi2()
         res = meta.fit(dset_sel, dset)
 
-        # Map names differ across NiMARE versions. Prefer the "association/
-        # specificity" map (term-specific), then "consistency/uniformity".
         try:
             available = list(res.maps.keys())
         except Exception:
@@ -910,7 +882,7 @@ class _NimareWorker(QThread):
         ]
         name = next((p for p in preferred if p in available), None)
         if name is None:
-            # any z-map, else any map at all
+            
             name = next((m for m in available if m.startswith("z_")),
                         available[0] if available else None)
         if name is None:
@@ -930,9 +902,7 @@ class _NimareWorker(QThread):
         if not ids:
             self.failed.emit("No studies near that coordinate."); return
         self.progress.emit(f"Decoding {len(ids)} studies…")
-        # NiMARE's `correction` argument is a no-op in some installed versions
-        # (it returns identical tables), so we apply Benjamini–Hochberg FDR
-        # ourselves on the p-value columns and add explicit corrected columns.
+        
         decoder = discrete.NeurosynthDecoder(correction=None)
         decoder.fit(dset)
         df = decoder.transform(ids=ids)
@@ -949,8 +919,8 @@ class _NimareWorker(QThread):
                                                      method='fdr_bh')[1]
                         df[col + '_fdr'] = corr
             except Exception as e:
-                print(f"⚠️ FDR correction failed, showing raw p only: {e}")
-        # tell the display whether corrected columns are present
+                print(f" FDR correction failed, showing raw p only: {e}")
+        
         df.attrs['fdr'] = bool(use_fdr and 'pReverse_fdr' in df.columns)
         self.done.emit(('decode', df))
 
@@ -973,7 +943,7 @@ class _NimareWorker(QThread):
             available = list(res.maps.keys())
         except Exception:
             available = []
-        # MKDADensity produces 'z' (also 'stat', 'p'); prefer the z map.
+        
         name = ("z" if "z" in available
                 else next((m for m in available if m.startswith("z")), None)
                 or ("stat" if "stat" in available else None)
@@ -998,7 +968,7 @@ class _TermMapAnimation(QWidget):
                        "attention", "motor", "emotion"]
         self._wi = 0
         self._timer = QTimer(self)
-        self._timer.setInterval(40)  # ~25 fps
+        self._timer.setInterval(40)  
         self._timer.timeout.connect(self._tick)
 
     def start(self): self._timer.start()
@@ -1006,7 +976,7 @@ class _TermMapAnimation(QWidget):
 
     def _tick(self):
         self._t += 0.04
-        # cycle the displayed word every ~3 seconds
+        
         if int(self._t * 1000) % 3000 < 40:
             self._wi = (self._wi + 1) % len(self._words)
         self.update()
@@ -1094,7 +1064,7 @@ class TermMapPanel(_ToolPanel):
         self.root.addWidget(self.anim, 1)
         self.anim.start()
 
-        # Result preview (hidden until a map is generated): big term -> arrow -> thumbnail
+        
         self.result_box = QWidget()
         rb = QHBoxLayout(self.result_box)
         rb.setContentsMargins(8, 8, 8, 8); rb.setSpacing(14)
@@ -1145,7 +1115,7 @@ class TermMapPanel(_ToolPanel):
         # stop+hide the loop, reveal the real result
         self.anim.stop(); self.anim.hide()
         self.result_term.setText(self.term.text().strip())
-        # render a thumbnail of the ACTUAL generated map (glass brain if possible)
+        
         try:
             self._make_thumb(data, affine)
         except Exception as e:
@@ -1185,9 +1155,7 @@ class TermMapPanel(_ToolPanel):
         self.result_thumb.setPixmap(pm)
 
 
-# ---------------------------------------------------------------------------
-# 6. Coordinate -> Terms  (NiMARE / Neurosynth)
-# ---------------------------------------------------------------------------
+
 class CoordTermsPanel(_ToolPanel):
     def __init__(self, owner):
         super().__init__(owner, "Coordinate → Terms (Neurosynth)",
@@ -1246,9 +1214,9 @@ class CoordTermsPanel(_ToolPanel):
         self.table.setMinimumHeight(220)
         self.root.addWidget(self.table)
         self._status_line()
-        self._save_row()    # to save the MACM map (Open in Viewer too)
+        self._save_row()    
         self._worker = None
-        self._decode_df = None   # full decoded DataFrame (for export + redraw)
+        self._decode_df = None   
 
     def _run(self):
         try:
@@ -1318,14 +1286,14 @@ class CoordTermsPanel(_ToolPanel):
             work = df.copy()
             work['__term'] = [self._clean_term(t) for t in work.index]
 
-            # keep only positively-associated terms (zReverse > 0) as the base
+            
             if 'zReverse' in work.columns:
                 work = work[work['zReverse'] > 0]
-            # optional noise filter
+            
             if self.noise_chk.isChecked():
                 work = work[~work['__term'].map(_is_noise)]
 
-            # sort: by FDR p (ascending) if present, else posterior (descending)
+            
             if has_fdr:
                 work = work.sort_values('pReverse_fdr', ascending=True,
                                         na_position='last')
@@ -1393,9 +1361,7 @@ class CoordTermsPanel(_ToolPanel):
             QMessageBox.critical(self, "Export error", str(e))
 
 
-# ---------------------------------------------------------------------------
-# The Utilities tab itself: left list + right stacked panels
-# ---------------------------------------------------------------------------
+
 class UtilitiesTab(QWidget):
     file_ready = pyqtSignal(str)   # emitted when a tool sends a file to the Viewer
 
@@ -1403,12 +1369,9 @@ class UtilitiesTab(QWidget):
         super().__init__()
         self.parent_main = parent_main
         self.meta_only = meta_only
-        # meta_only kept for backward compatibility with earlier callers
+        
         self.tools_mode = 'meta' if meta_only else tools
-        # The Utilities area uses a fixed dark background in BOTH themes, so all
-        # of its text is white/light for readability (a theme-driven dark text
-        # colour would be invisible here). This container rule covers every
-        # QLabel/checkbox/field label in the tab at once.
+        
         self.setObjectName("utilitiesTab")
         self.setStyleSheet(
             "#utilitiesTab { background:#0a0a14; }"
@@ -1419,7 +1382,7 @@ class UtilitiesTab(QWidget):
         root.setContentsMargins(10, 10, 10, 10)
         root.setSpacing(10)
 
-        # Left tool menu — kept dark in both themes to match the panel area
+        
         self.menu = QListWidget()
         self.menu.setMaximumWidth(230)
         _c = _colors()
@@ -1444,9 +1407,7 @@ class UtilitiesTab(QWidget):
             ("🧮  Term → Map", TermMapPanel, 'meta'),
             ("🔎  Coordinate → Terms", CoordTermsPanel, 'meta'),
         ]
-        # tools mode:  'all'  -> everything (full MBCT app)
-        #              'meta' -> only meta-analysis (MBCT Meta-Analysis Tool)
-        #              'maps' -> only map-manipulation (MBCT Brain Viewer)
+        
         want = self.tools_mode
         self._tools = []
         for name, cls, kind in self._all_tools:
