@@ -1,3 +1,4 @@
+#Klugah-Brown
 """
 theme_manager.py
 Central theming for the whole app. Two themes:
@@ -16,8 +17,6 @@ from PyQt6.QtGui import QPalette, QColor
 import os
 from pathlib import Path
 
-# Logo files: logo1 (white bg) pairs with the LIGHT theme,
-#             logo2 (black bg) pairs with the DARK theme.
 LOGO_LIGHT = 'logo1.png'
 LOGO_DARK = 'logo2.png'
 
@@ -49,8 +48,8 @@ def logo_for_theme(name=None, variant='full'):
     """
     name = name or CURRENT
     is_dark = (name == 'dark')
-    base = LOGO_DARK if is_dark else LOGO_LIGHT          # 'logo2.png' / 'logo1.png'
-    stem = base[:-4]                                     # 'logo2' / 'logo1'
+    base = LOGO_DARK if is_dark else LOGO_LIGHT          
+    stem = base[:-4]                                     
     if variant in ('small', 'icon'):
         cand = asset_path(f"{stem}_{variant}.png")
         if cand and os.path.exists(cand):
@@ -58,15 +57,10 @@ def logo_for_theme(name=None, variant='full'):
     return asset_path(base)
 
 
-CURRENT = 'win11'   # module-level record of the active theme
+CURRENT = 'win11'   
 
 
-# ===========================================================================
-# WINDOWS 11 / FLUENT  (light)  -- default
-# ===========================================================================
 
-# Shared cross-platform UI font stack (Windows / macOS / Linux) — used by BOTH
-# themes so typography is identical regardless of OS.
 UI_FONT = ("'Segoe UI Variable','Segoe UI','SF Pro Text','-apple-system',"
            "'Helvetica Neue','Inter','Ubuntu','Cantarell',sans-serif")
 
@@ -170,9 +164,6 @@ WIN11_PALETTE = {
 }
 
 
-# ===========================================================================
-# DARK NAVY  (original)
-# ===========================================================================
 
 DARK_QSS = """
 QMainWindow, QWidget         { background:#16171f; color:#e6e9ef; font-family:__FONT__;
@@ -281,9 +272,6 @@ DARK_PALETTE = {
 }
 
 
-# ===========================================================================
-# Plot / figure colors per theme  (the brain canvases stay black in BOTH)
-# ===========================================================================
 
 def figure_colors(name=None):
     """Return a dict of colors for matplotlib figures used in tabs.
@@ -291,13 +279,13 @@ def figure_colors(name=None):
     name = name or CURRENT
     if name == 'win11':
         return {
-            'fig': '#ffffff',     # chart figure background
-            'ax':  '#ffffff',     # chart axes background
+            'fig': '#ffffff',     
+            'ax':  '#ffffff',     
             'text': '#1a1a1a',
             'grid': '#e2e2e2',
             'spine': '#cccccc',
             'accent': '#2563eb',
-            'brain_bg': '#000000',   # imaging area stays black in both themes
+            'brain_bg': '#000000',   
         }
     return {
         'fig': '#1e2029',
@@ -325,9 +313,7 @@ def apply_matplotlib(name=None):
     })
 
 
-# ===========================================================================
-# Apply
-# ===========================================================================
+
 
 def detect_os_theme():
     """Best-effort detection of the OS light/dark preference.
