@@ -1,3 +1,4 @@
+#Klugah-Brown 2026
 """
 patch_abagen.py — make the installed abagen compatible with pandas >= 2.0.
 
@@ -23,21 +24,19 @@ def patch_file(path: Path) -> int:
     """Apply the pandas>=2.0 fixes to one file. Returns the number of changes."""
     src = original = path.read_text(encoding="utf-8")
 
-    # 1. set_axis() lost its `inplace` keyword in pandas 2.0.
+    
     src = re.sub(r"\.set_axis\(([^()]*?),\s*inplace\s*=\s*False\s*\)",
                  r".set_axis(\1)", src)
     src = re.sub(r"\.set_axis\(([^()]*?),\s*inplace\s*=\s*True\s*\)",
                  r".set_axis(\1)", src)
 
-    # 2. groupby(axis=1) was removed; transpose, group, transpose back.
+    
     src = src.replace(".groupby(sid, axis=1).mean()",
                       ".T.groupby(sid).mean().T")
     src = re.sub(r"\.groupby\(([^()]*?),\s*axis=1\)\.mean\(\)",
                  r".T.groupby(\1).mean().T", src)
 
-    # 3. DataFrame.append() / Series.append() were removed in favour of concat.
-    #    Only rewrite when the receiver looks like a DataFrame/Series — plain
-    #    Python lists also have .append() and must NOT be touched.
+   
     _df_like = (r"(?:df|frame|micro|microarray|expression|expr|annot|annotation|"
                 r"probes|pacall|ontology|counts|data|out|res|result|samples|"
                 r"[A-Za-z_]*_df|[A-Za-z_]*_frame)")
@@ -47,7 +46,7 @@ def patch_file(path: Path) -> int:
     if src == original:
         return 0
 
-    # Make sure pandas is importable in files we rewrote to use pd.concat.
+    
     if "pd.concat" in src and not re.search(r"^\s*import pandas as pd", src, re.M):
         lines = src.splitlines()
         for i, line in enumerate(lines):
@@ -79,7 +78,7 @@ def main():
         try:
             if patch_file(py):
                 changed.append(py.relative_to(root))
-        except Exception as e:                       # never leave a file broken
+        except Exception as e:                       #
             print(f"  ! skipped {py.name}: {e}")
 
     if changed:
@@ -89,7 +88,7 @@ def main():
     else:
         print("\nnothing to patch — abagen already looks pandas>=2.0 compatible.")
 
-    # Report anything the automated rules could not resolve.
+    
     leftovers = []
     for py in sorted(root.rglob("*.py")):
         if py.name.endswith(".bak"):
