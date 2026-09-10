@@ -1,3 +1,5 @@
+#Klugah-Brown 2026
+
 """
 viewer_stats.py
 Statistical engine for the standalone Brain Viewer tab.
@@ -19,9 +21,7 @@ import nibabel as nib
 from scipy import ndimage
 
 
-# ---------------------------------------------------------------------------
-# Coordinates
-# ---------------------------------------------------------------------------
+
 
 def voxel_to_mni(ijk, affine):
     v = affine @ np.array([ijk[0], ijk[1], ijk[2], 1.0], dtype=float)
@@ -35,9 +35,7 @@ def voxel_volume_mm3(affine):
         return 1.0
 
 
-# ---------------------------------------------------------------------------
-# Thresholding
-# ---------------------------------------------------------------------------
+
 
 def threshold_mask(data, thr_pos=None, thr_neg=None):
     """
@@ -64,9 +62,6 @@ _STRUCT = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Cluster extent analysis
-# ---------------------------------------------------------------------------
 
 def cluster_analysis(data, affine, thr_pos=None, thr_neg=None,
                      connectivity=18, min_extent=0):
@@ -105,7 +100,7 @@ def cluster_analysis(data, affine, thr_pos=None, thr_neg=None,
             out_labels[cmask] = next_id
 
             vals = data[cmask]
-            # peak = extreme absolute value (handles +/- maps)
+            
             peak_local = int(np.argmax(np.abs(vals)))
             coords = np.argwhere(cmask)
             peak_ijk = tuple(int(c) for c in coords[peak_local])
@@ -128,7 +123,7 @@ def cluster_analysis(data, affine, thr_pos=None, thr_neg=None,
             })
 
     clusters.sort(key=lambda c: c['n_voxels'], reverse=True)
-    # renumber so table order == label order
+    
     remap = {c['id']: i + 1 for i, c in enumerate(clusters)}
     if remap:
         relabeled = np.zeros_like(out_labels)
@@ -140,9 +135,7 @@ def cluster_analysis(data, affine, thr_pos=None, thr_neg=None,
     return clusters, out_labels
 
 
-# ---------------------------------------------------------------------------
-# Intensity statistics
-# ---------------------------------------------------------------------------
+
 
 def intensity_stats(data, mask=None):
     """
@@ -192,9 +185,7 @@ def value_at_voxel(data, ijk):
     return None
 
 
-# ---------------------------------------------------------------------------
-# Per-cluster NIfTI export
-# ---------------------------------------------------------------------------
+
 
 def export_clusters(out_dir, clusters, label_volume, affine,
                     data=None, masked_values=True):
