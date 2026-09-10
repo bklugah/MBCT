@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#Klugah-Brown 2026
 """
 precompute_transcriptomics.py  —  DEVELOPER-SIDE, RUN ONCE.
 
@@ -59,7 +59,7 @@ import os
 import sys
 from pathlib import Path
 
-# Add the current project directory to Python path so we find local abagen
+
 project_dir = Path(__file__).resolve().parent
 sys.path.insert(0, str(project_dir))
 
@@ -68,7 +68,7 @@ import nibabel as nib
 
 from precompute_neurosynth import autodetect_atlas_dir, network_masks  # noqa: E402
 
-# (PET system, receptor gene symbol) — paired so the UI can show gene vs density
+
 RECEPTOR_GENES = [
     ("GABAa",  "GABRA1"),
     ("D1",     "DRD1"),
@@ -106,7 +106,7 @@ def _load_ahba_from_cache(cache_dir):
         raise OSError(f"No AHBA zips found in {cache_path}")
     
     print(f"Loading {len(zips)} donors with regional aggregation...")
-    all_donor_data = {}  # donor → (genes × regions dataframe)
+    all_donor_data = {}  
     
     for zf in zips:
         donor = zf.stem.replace("normalized_microarray_", "")
@@ -119,7 +119,7 @@ def _load_ahba_from_cache(cache_dir):
                     probes_df = pd.read_csv(f)
                 probe_to_gene = dict(zip(probes_df['probe_id'], probes_df['gene_symbol']))
             except Exception as e:
-                print(f"    ⚠️ Could not load Probes.csv: {e}")
+                print(f"     Could not load Probes.csv: {e}")
                 continue
             
             # Load expression data (probes × samples)
@@ -127,27 +127,26 @@ def _load_ahba_from_cache(cache_dir):
                 with z.open('MicroarrayExpression.csv') as f:
                     expr_df = pd.read_csv(f, index_col=0, header=None)
             except Exception as e:
-                print(f"    ⚠️ Could not load MicroarrayExpression.csv: {e}")
+                print(f"     Could not load MicroarrayExpression.csv: {e}")
                 continue
             
-            # Load sample annotations (sample index → MNI coordinates)
+            
             try:
                 with z.open('SampleAnnot.csv') as f:
                     annot_df = pd.read_csv(f)
-                # Column indices in expr_df correspond to row order in annot_df
-                # Map column index → MNI coordinates
-                mni_coords = annot_df[['mni_x', 'mni_y', 'mni_z']].values  # (n_samples, 3)
+                
+                mni_coords = annot_df[['mni_x', 'mni_y', 'mni_z']].values  
             except Exception as e:
-                print(f"    ⚠️ Could not load SampleAnnot.csv: {e}")
+                print(f"     Could not load SampleAnnot.csv: {e}")
                 continue
             
             if len(mni_coords) != expr_df.shape[1]:
-                print(f"    ⚠️ Sample count mismatch: expr={expr_df.shape[1]}, annot={len(mni_coords)}")
+                print(f"     Sample count mismatch: expr={expr_df.shape[1]}, annot={len(mni_coords)}")
                 continue
             
-            print(f"    ✅ Loaded: {expr_df.shape[0]} probes × {expr_df.shape[1]} samples")
+            print(f"     Loaded: {expr_df.shape[0]} probes × {expr_df.shape[1]} samples")
             
-            # Store for regional aggregation (done after DK atlas is available)
+            
             all_donor_data[donor] = {
                 'expr': expr_df,
                 'mni': mni_coords,
@@ -167,7 +166,7 @@ def _aggregate_to_dk_regions(ahba_donor_data, dk_img, ref_shape, aff, region_ids
     
     dk_lab = np.asarray(dk_img.get_fdata()).astype(int)
     
-    # DK region centroids in world space
+    
     region_centroids = {}
     for rid in region_ids:
         vox = np.argwhere(dk_lab == rid)
@@ -177,42 +176,42 @@ def _aggregate_to_dk_regions(ahba_donor_data, dk_img, ref_shape, aff, region_ids
     
     print(f"  DK atlas: {len(region_centroids)} regions")
     
-    # Aggregate all donors' data into genes × regions
+    
     all_genes = set()
-    gene_region_data = {}  # (gene, region_idx) → [expression values]
+    gene_region_data = {}  
     
     for donor, data in sorted(ahba_donor_data.items()):
-        expr_df = data['expr']  # probes × samples
-        mni_coords = data['mni']  # (n_samples, 3) in world space
+        expr_df = data['expr']  
+        mni_coords = data['mni']  
         probe_to_gene = data['probe_to_gene']
         
-        # Map each sample to nearest DK region
+        
         region_centroids_array = np.array([region_centroids[rid] for rid in region_ids])
-        distances = scipy_cdist(mni_coords, region_centroids_array)  # (n_samples, n_regions)
-        sample_to_region = np.argmin(distances, axis=1)  # (n_samples,) → region index
+        distances = scipy_cdist(mni_coords, region_centroids_array)  
+        sample_to_region = np.argmin(distances, axis=1)  
         
-        # Map probes to genes
+        
         expr_df['gene_symbol'] = expr_df.index.map(probe_to_gene)
-        expr_df = expr_df[expr_df['gene_symbol'].notna()]  # Remove unmapped probes
+        expr_df = expr_df[expr_df['gene_symbol'].notna()]  
         
-        # For each gene, aggregate by region
+        
         for gene in expr_df['gene_symbol'].unique():
             all_genes.add(gene)
-            probe_rows = expr_df[expr_df['gene_symbol'] == gene].iloc[:, :-1]  # exclude gene_symbol col
+            probe_rows = expr_df[expr_df['gene_symbol'] == gene].iloc[:, :-1]  
             
             for ri, rid in enumerate(region_ids):
                 sample_mask = (sample_to_region == ri)
                 if sample_mask.sum() > 0:
-                    # Mean expression across all probes and samples in this region
+                    
                     expr_val = probe_rows.iloc[:, sample_mask].values.mean()
                     key = (gene, ri)
                     if key not in gene_region_data:
                         gene_region_data[key] = []
                     gene_region_data[key].append(expr_val)
         
-        print(f"    ✅ {donor}: {len(expr_df['gene_symbol'].unique())} genes mapped")
+        print(f"     {donor}: {len(expr_df['gene_symbol'].unique())} genes mapped")
     
-    # Build final dataframe: genes × regions (averaged across donors)
+    
     genes_sorted = sorted(all_genes)
     gene_expr_matrix = np.zeros((len(genes_sorted), len(region_ids)))
     
@@ -225,7 +224,7 @@ def _aggregate_to_dk_regions(ahba_donor_data, dk_img, ref_shape, aff, region_ids
     expr_df = pd.DataFrame(gene_expr_matrix, index=genes_sorted, 
                            columns=[f'region_{i}' for i in range(len(region_ids))])
     
-    print(f"\n  ✅ Final: {expr_df.shape[0]} genes × {expr_df.shape[1]} regions")
+    print(f"\n   Final: {expr_df.shape[0]} genes × {expr_df.shape[1]} regions")
     return expr_df
 
 
@@ -269,7 +268,7 @@ def main():
     only = set(s.strip() for s in args.only.split(",")) if args.only else None
     print(f"Atlas dir: {atlas_dir}")
 
-    # --- Heavy imports (developer machine only) ---------------------------
+    
     try:
         from nilearn.image import resample_to_img
         import pandas as pd
@@ -282,7 +281,7 @@ def main():
         except ImportError:
             sys.exit("brainsmash required for p_spin (or use --n-perm 0): pip install brainsmash")
 
-    # --- Reference 2mm grid (from the atlas space) ------------------------
+    
     spdir = atlas_dir / args.space
     sample_atlas = next(spdir.glob("*/*.nii.gz"), None)
     if sample_atlas is None:
@@ -292,11 +291,9 @@ def main():
     aff = ra.affine
     ref_img = nib.Nifti1Image(np.zeros(ref_shape), aff)
 
-    # --- Desikan-Killiany parcellation (from local abagen folder) ----------
+    
     print("Loading Desikan-Killiany atlas (83 regions)...")
-    # Locate the Desikan-Killiany parcellation. Prefer abagen's own fetcher
-    # (works wherever abagen is installed), then the installed package's data
-    # directory, then a local abagen/ folder for legacy layouts.
+    
     dk_atlas_path = None
     dk_info_path = None
 
@@ -336,14 +333,14 @@ def main():
                  "next to this script.")
     
     dk_img = nib.load(str(dk_atlas_path))
-    print(f"  ✅ Loaded from {dk_atlas_path}")
+    print(f"   Loaded from {dk_atlas_path}")
     
     dk_lab = np.asarray(resample_to_img(
         dk_img, ref_img, interpolation='nearest').get_fdata()).astype(int)
     region_ids = sorted(int(x) for x in np.unique(dk_lab) if x > 0)
     region_vox = {rid: np.flatnonzero((dk_lab == rid).ravel()) for rid in region_ids}
 
-    # region centroids (world) -> distance matrix for the spatial null
+    
     from scipy.spatial.distance import cdist
     cent = np.zeros((len(region_ids), 3))
     for i, rid in enumerate(region_ids):
@@ -351,16 +348,7 @@ def main():
         cent[i] = (aff @ np.array([vi.mean(), vj.mean(), vk.mean(), 1.0]))[:3]
     D = cdist(cent, cent)
 
-    # --- Regional expression matrix -------------------------------------
-    # abagen's workflow is used because the normalization steps it performs are
-    # what make gene-specific signal recoverable. Aggregating raw microarray
-    # values to regions WITHOUT normalization leaves a large component that is
-    # shared across all genes (donor batch, overall transcriptional activity,
-    # tissue composition); correlations then reflect that shared regional
-    # gradient rather than the gene, and every gene returns almost the same r.
-    # abagen defaults address this via intensity-based filtering, probe
-    # selection by differential stability, and scaled-robust-sigmoid
-    # normalization within donor, before aggregating across donors.
+    
     expr = None
     if not args.legacy_aggregation:
         try:
@@ -370,11 +358,8 @@ def main():
             print("Building regional expression matrix with abagen "
                   "(probe_selection='diff_stability', gene_norm='srs')...")
             df = abagen.get_expression_data(
-                str(dk_atlas_path),            # DK parcellation image
-                # atlas_info constrains sample matching by hemisphere/structure,
-                # but that code path in abagen 0.1.x still calls the removed
-                # DataFrame.append() and fails on pandas >= 2.0. Enable with
-                # --use-atlas-info once abagen is fixed upstream.
+                str(dk_atlas_path),            
+                
                 atlas_info=(str(dk_info_path)
                             if (args.use_atlas_info and dk_info_path
                                 and Path(dk_info_path).exists()) else None),
@@ -384,28 +369,28 @@ def main():
                 gene_norm='srs',
                 region_agg='donors',
                 agg_metric='mean',
-                missing='centroids',           # fill unsampled regions
+                missing='centroids',           
                 data_dir=str(Path(args.cache).expanduser().resolve()),
                 verbose=1,
                 n_proc=args.n_proc,
             )
-            # abagen returns regions x genes; this script expects genes x regions
+            
             expr = df.transpose()
             expr.columns = list(df.index)
-            print(f"   ✅ abagen matrix: {expr.shape[0]} genes x "
+            print(f"    abagen matrix: {expr.shape[0]} genes x "
                   f"{expr.shape[1]} regions (normalized)")
         except ImportError:
-            print("   ⚠️  abagen is not installed. Install it with "
+            print("     abagen is not installed. Install it with "
                   "'pip install abagen', or pass --legacy-aggregation to use "
                   "the unnormalized fallback (NOT suitable for reporting).")
             sys.exit(1)
         except Exception as e:
-            print(f"   ⚠️  abagen failed: {e}")
+            print(f"     abagen failed: {e}")
             print("   Re-run with --legacy-aggregation only for smoke-testing; "
                   "its values must not be reported as results.")
             sys.exit(1)
     else:
-        print("⚠️  LEGACY aggregation requested: raw regional means, NO "
+        print("  LEGACY aggregation requested: raw regional means, NO "
               "normalization.\n"
               "    Gene-specific signal is confounded by the shared regional "
               "component;\n"
@@ -415,31 +400,29 @@ def main():
         expr = _aggregate_to_dk_regions(
             ahba_donor_data, dk_img, ref_shape, aff, region_ids)
 
-    # Check if receptor genes are present
+    
     want = [(s, g) for s, g in RECEPTOR_GENES if g in expr.index]
     missing = [g for _, g in RECEPTOR_GENES if g not in expr.index]
 
     if missing:
-        print(f"   ⚠️  genes not found: {', '.join(missing[:5])}... ({len(missing)} total)")
+        print(f"     genes not found: {', '.join(missing[:5])}... ({len(missing)} total)")
     if not want:
         sys.exit(f"None of the {len(RECEPTOR_GENES)} receptor genes found in AHBA data.")
 
-    print(f"   ✅ {len(want)} receptor genes found")
+    print(f"    {len(want)} receptor genes found")
 
     # expr is now: genes × regions
     gene_vec = {}
     for _, g in want:
         v = np.asarray(expr.loc[g].values, dtype=float)
-        # abagen can leave NaNs for regions with no samples; interpolate them
-        # to the gene's mean so the correlation is defined over all regions.
+        
         if np.isnan(v).any():
             finite = np.isfinite(v)
             v = np.where(finite, v, v[finite].mean() if finite.any() else 0.0)
         gene_vec[g] = v
     sys_of = {g: s for s, g in want}
 
-    # Sanity check: if every gene yields a near-identical vector the matrix is
-    # dominated by a shared component and the results are not interpretable.
+    
     _stack = np.vstack([gene_vec[g] for _, g in want])
     if _stack.shape[0] > 1:
         _z = (_stack - _stack.mean(axis=1, keepdims=True)) / (
@@ -449,14 +432,14 @@ def main():
         _median_r = float(np.median(np.abs(_off)))
         print(f"   median |r| between gene profiles: {_median_r:.2f}")
         if _median_r > 0.95:
-            print("   ⚠️  WARNING: gene expression profiles are nearly "
+            print("     WARNING: gene expression profiles are nearly "
                   "identical to one another.\n"
                   "       The matrix is dominated by a shared regional "
                   "component and per-gene\n"
                   "       associations will not be interpretable. Check that "
                   "normalization ran.")
 
-    # pre-generate surrogate gene maps once (reused across all networks)
+    
     gene_surr = {}
     if args.n_perm > 0:
         print(f"Generating {args.n_perm} variogram surrogates per gene...")
