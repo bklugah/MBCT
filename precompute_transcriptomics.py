@@ -1,57 +1,5 @@
-#!/usr/bin/env python3
-"""
-precompute_transcriptomics.py  —  DEVELOPER-SIDE, RUN ONCE.
+#Klugah-Brown
 
-For every network footprint of every CBIG atlas, computes its spatial
-association with the regional expression of NEUROTRANSMITTER RECEPTOR GENES
-(Allen Human Brain Atlas, via abagen) and writes:
-
-        data/transcriptomics_mapping.json
-
-Why receptor genes only
------------------------
-A raw "top genes" list over all ~20,000 AHBA genes is a 20k-way multiple
-comparison, hard to interpret, and notoriously pipeline-sensitive (abagen's
-own paper shows processing choices can swing gene-imaging correlations by
-rho >= 1.0). Scoping to receptor genes keeps it interpretable AND lets the app
-pair each gene with its PET receptor map for convergent cross-validation:
-e.g. D2 receptor *density* (raclopride PET) vs DRD2 *mRNA* (AHBA) for a network.
-
-Why the Desikan-Killiany atlas
-------------------------------
-The AHBA has only ~3,700 tissue samples across six donors, so a fine cubic
-parcellation would leave most parcels with no samples. DK's 83 regions are the
-standard, well-sampled choice for imaging transcriptomics; abagen ships it.
-
-Statistic & significance
--------------------------
-Per (network, gene): point-biserial r between the network's regional profile
-(fraction of each DK region inside the network) and the gene's regional
-expression. Significance is a spatial-autocorrelation-preserving p_spin from
-variogram-matched surrogates (brainsmash) over DK region centroids.
-
-Output structure
-----------------
-    { "_meta": {...},
-      "EG17": {"Default": [["DRD2 (D2)", 0.21, 0.04], ...]}, ... }
-    (each row = ["GENE (SYSTEM)", r, p_spin], sorted by |r| desc)
-
-Requirements (developer machine only):
-    pip install abagen brainsmash nilearn nibabel numpy scipy pandas
-    # abagen downloads the Allen Human Brain Atlas (~4 GB) on first run.
-
-Usage:
-    
-    # Simple: compute transcriptomics from cached AHBA data
-    # (assumes AHBA donor zips are already in ahba_cache/microarray/)
-    python precompute_transcriptomics.py --only EG17,TY17 --n-perm 0
-    
-    # Full run with p_spin:
-    python precompute_transcriptomics.py --n-perm 1000
-    
-    # Single atlas for testing:
-    python precompute_transcriptomics.py --only EG17 --n-perm 0
-"""
 
 import argparse
 import json
